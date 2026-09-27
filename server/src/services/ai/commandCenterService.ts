@@ -19,9 +19,12 @@ export async function getCommandCenterState() {
   
   const occupancy_pct = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
   
-  // Quick hack for check-ins/check-outs today (mocking with bookings since we don't have exact time filters handy)
-  const todaysCheckins = await Booking.countDocuments({ status: 'confirmed' });
-  const todaysCheckouts = Math.floor(occupiedRooms * 0.2); // Rough estimate for now
+  // Check-ins/check-outs scheduled for today, based on actual booking dates
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const allBookings = await Booking.find({ status: { $ne: 'cancelled' } });
+  const toDateStr = (d: unknown): string => (d ? new Date(d as string | Date).toISOString().slice(0, 10) : '');
+  const todaysCheckins = allBookings.filter((b: any) => toDateStr(b.check_in) === todayStr).length;
+  const todaysCheckouts = allBookings.filter((b: any) => toDateStr(b.check_out) === todayStr).length;
 
   // 2. Staff Capacity View & Operational Pressure
   const allStaff = await StaffRoster.find();

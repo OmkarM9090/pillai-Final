@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export function CouncilAndApproval() {
   const [council, setCouncil] = useState<any>(null);
@@ -79,7 +79,7 @@ export function CouncilAndApproval() {
     }
   };
 
-  const handleApprove = async (decision: string) => {
+  const handleApprove = async (decision: 'APPROVE' | 'REJECT') => {
     setDecisionProcessing(true);
     try {
       const res = await fetch('/api/v1/approve-plan', {
@@ -88,16 +88,18 @@ export function CouncilAndApproval() {
         body: JSON.stringify({
           action_id: actionCard?.action_id,
           decision,
-          user_name: 'General Manager',
-          user_role: 'Super Admin',
         }),
       });
       const text = await res.text();
       try {
         const json = JSON.parse(text);
         if (json.success) {
-          setActionCard(json.data.action_card);
-          setAuditLog(json.data.audit_log);
+          setActionCard(json.data);
+          setAuditLog({
+            action_type: decision === 'APPROVE' ? 'PLAN_APPROVED' : 'PLAN_REJECTED',
+            user_name: 'Command Center Manager',
+            user_role: 'MANAGER',
+          });
           setDecisionProcessing(false);
           return;
         }
@@ -108,11 +110,11 @@ export function CouncilAndApproval() {
     } catch (err) {
       console.error(err);
       setTimeout(() => {
-        if (decision === 'approve') {
+        if (decision === 'APPROVE') {
           setActionCard((prev: any) => ({ ...prev, approval_status: 'approved' }));
           setAuditLog({ action_type: 'MUTATE_TWIN', user_name: 'General Manager', user_role: 'Super Admin' });
         } else {
-          setActionCard(null);
+          setActionCard((prev: any) => ({ ...prev, approval_status: 'rejected' }));
         }
         setDecisionProcessing(false);
       }, 600);
@@ -179,7 +181,7 @@ export function CouncilAndApproval() {
             <div className="font-bold text-slate-200 mb-1.5">Action Plan Steps:</div>
             <ul className="space-y-1 text-slate-400 text-[11px]">
               {chief_synthesis.implementation_steps?.map((s: string, i: number) => (
-                <li key={i}>âœ“ {s}</li>
+                <li key={i}>✓ {s}</li>
               ))}
             </ul>
           </div>
@@ -195,7 +197,7 @@ export function CouncilAndApproval() {
             disabled={decisionProcessing}
             className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition"
           >
-            {decisionProcessing ? 'Compiling Action Card...' : 'Draft Formal Action Card for Human Approval â†’'}
+            {decisionProcessing ? 'Compiling Action Card...' : 'Draft Formal Action Card for Human Approval →'}
           </button>
         )}
       </div>
@@ -209,40 +211,57 @@ export function CouncilAndApproval() {
               <h3 className="text-sm font-bold text-white">{actionCard.title}</h3>
             </div>
             <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${
-              actionCard.approval_status === 'approved' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              actionCard.approval_status === 'approved' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : actionCard.approval_status === 'rejected' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
             }`}>
               Status: {actionCard.approval_status}
             </span>
           </div>
 
-          <div className="text-xs text-slate-300">{actionCard.predicted_benefit}</div>
+          <div className="text-xs text-slate-300">
+            <span className="font-bold text-slate-200">Trigger:</span> {actionCard.trigger} · <span className="font-bold text-slate-200">Affects:</span>{' '}
+            {actionCard.affected_departments?.join(', ')}
+            {actionCard.evidence?.length > 0 && (
+              <div className="mt-1 text-[11px] text-slate-400">Evidence: {actionCard.evidence.join(' · ')}</div>
+            )}
+          </div>
 
           {actionCard.approval_status === 'pending' ? (
             <div className="flex space-x-3 pt-2">
               <button
-                onClick={() => handleApprove('approve')}
+                onClick={() => handleApprove('APPROVE')}
                 disabled={decisionProcessing}
                 className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition"
               >
-                âœ“ APPROVE & MUTATE DIGITAL TWIN
+                ✓ APPROVE & MUTATE DIGITAL TWIN
               </button>
               <button
-                onClick={() => handleApprove('reject')}
+                onClick={() => handleApprove('REJECT')}
                 disabled={decisionProcessing}
                 className="px-6 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition"
               >
-                âœ— REJECT
+                ✗ REJECT
               </button>
+            </div>
+          ) : actionCard.approval_status === 'rejected' ? (
+            <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-xl space-y-2">
+              <div className="text-xs font-bold text-rose-400">
+                ✗ Plan Rejected — Digital Twin unchanged.
+              </div>
+              {auditLog && (
+                <div className="mt-2 text-[10px] font-mono text-slate-400 bg-slate-950 p-2 rounded">
+                  Audit Log Registered: {auditLog.action_type} by {auditLog.user_name} ({auditLog.user_role})
+                </div>
+              )}
             </div>
           ) : (
             <div className="p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-xl space-y-2">
               <div className="text-xs font-bold text-emerald-400">
-                âœ… Plan Executed on MongoDB Digital Twin!
+                ✅ Plan Executed on MongoDB Digital Twin!
               </div>
               <div className="text-[11px] text-slate-300">
-                â€¢ 2 Spa staff reallocated to Housekeeping turn-down.<br />
-                â€¢ 20kg emergency Salmon PO added to Pantry Inventory.<br />
-                â€¢ Suite night rates adjusted to dampen surge demand.
+                • {actionCard.implementation_steps?.[0] || 'Action plan executed across affected departments.'}<br />
+                • A new operational ticket has been created and routed to the responsible department.<br />
+                • Staff roster and audit trail updated in real time.
               </div>
               {auditLog && (
                 <div className="mt-2 text-[10px] font-mono text-slate-400 bg-slate-950 p-2 rounded">

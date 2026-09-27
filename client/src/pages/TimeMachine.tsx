@@ -23,6 +23,36 @@ export function TimeMachine() {
   const [loading, setLoading] = useState(false);
   const [isError, setIsError] = useState(false);
   const [actionPlanStatus, setActionPlanStatus] = useState<string | null>(null);
+  const [weeklyForecast, setWeeklyForecast] = useState<any[] | null>(null);
+  const [forecastFallback, setForecastFallback] = useState(false);
+
+  // Fetch real trained-ML occupancy forecast (Ridge/Gradient Boosting models via ML core)
+  useEffect(() => {
+    fetch('/api/v1/forecast/weekly', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data?.weekly_forecast) {
+          setWeeklyForecast(json.data.weekly_forecast);
+          setForecastFallback(false);
+        } else {
+          throw new Error('forecast unavailable');
+        }
+      })
+      .catch(() => {
+        setForecastFallback(true);
+        setWeeklyForecast([
+          { day: 'Mon', predicted_occupancy: 68, risk_level: 'medium' },
+          { day: 'Tue', predicted_occupancy: 70, risk_level: 'medium' },
+          { day: 'Wed', predicted_occupancy: 66, risk_level: 'medium' },
+          { day: 'Thu', predicted_occupancy: 64, risk_level: 'low' },
+          { day: 'Fri', predicted_occupancy: 74, risk_level: 'medium' },
+          { day: 'Sat', predicted_occupancy: 91, risk_level: 'high' },
+          { day: 'Sun', predicted_occupancy: 88, risk_level: 'high' },
+        ]);
+      });
+  }, []);
 
   const runSimulation = useCallback(async () => {
     setLoading(true);
@@ -113,6 +143,42 @@ export function TimeMachine() {
         >
           {loading ? 'SIMULATING...' : 'RUN SCENARIO'}
         </button>
+      </div>
+
+      {/* REAL TRAINED ML: 7-DAY OCCUPANCY FORECAST */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl mb-6">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">0. AI Occupancy Demand Forecast</h2>
+            <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-[10px] font-bold rounded">
+              TRAINED ML MODEL
+            </span>
+            {forecastFallback && (
+              <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold rounded">
+                FALLBACK MODE
+              </span>
+            )}
+          </div>
+          <span className="text-[11px] text-slate-500">Gradient Boosting / Ridge Regression · trained on historical booking &amp; demand data</span>
+        </div>
+        {weeklyForecast ? (
+          <div className="grid grid-cols-7 gap-2 md:gap-4 items-end">
+            {weeklyForecast.map((d: any) => (
+              <div key={d.day} className="flex flex-col items-center">
+                <div className="text-xs font-black text-white mb-1">{d.predicted_occupancy}%</div>
+                <div className="w-full bg-slate-800 rounded-t-md h-24 flex items-end overflow-hidden">
+                  <div
+                    className={`w-full ${d.risk_level === 'high' ? 'bg-rose-500' : d.risk_level === 'medium' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                    style={{ height: `${Math.max(6, Math.min(100, d.predicted_occupancy))}%` }}
+                  ></div>
+                </div>
+                <div className="text-[10px] font-bold text-slate-400 mt-1.5 uppercase">{d.day}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="h-24 flex items-center justify-center text-slate-500 text-xs animate-pulse">Loading forecast from ML core...</div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

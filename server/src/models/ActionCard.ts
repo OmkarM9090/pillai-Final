@@ -40,6 +40,7 @@ const ActionCardSchema = new Schema<IActionCard>({
   predicted_benefit: { type: String },
   predicted_risk: { type: String },
   options: [{
+    _id: false,
     label: { type: String },
     description: { type: String },
     impact: { type: String }

@@ -161,11 +161,19 @@ export function ReviewAndKanban() {
 
         {analysis && (
           <div className="p-4 bg-slate-950 border border-slate-800 rounded-lg space-y-2">
-            <div className="flex items-center space-x-3 text-xs">
+            <div className="flex items-center flex-wrap gap-x-3 gap-y-2 text-xs">
               <span className="font-bold text-slate-300">Extracted Aspect:</span>
               <span className="px-2 py-0.5 bg-slate-800 text-slate-200 rounded">{analysis.aspect}</span>
               <span className="font-bold text-slate-300">Sentiment:</span>
-              <span className="px-2 py-0.5 bg-rose-500/20 text-rose-300 rounded font-bold">{analysis.sentiment}</span>
+              <span className={`px-2 py-0.5 rounded font-bold ${
+                analysis.sentiment === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-300' :
+                analysis.sentiment === 'NEUTRAL' ? 'bg-slate-700 text-slate-300' : 'bg-rose-500/20 text-rose-300'
+              }`}>{analysis.sentiment}</span>
+              {analysis.sentiment_source && (
+                <span className="px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded text-[10px] font-bold uppercase">
+                  {analysis.sentiment_source === 'ml_model' ? '🧠 ML Model' : 'Rule-Based'}
+                </span>
+              )}
               <span className="font-bold text-slate-300">Routing Dept:</span>
               <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded uppercase font-bold">{analysis.department}</span>
             </div>
@@ -176,6 +184,11 @@ export function ReviewAndKanban() {
                 </span>
               ))}
             </div>
+            {analysis.ticket_created === false ? (
+              <div className="text-[11px] text-emerald-400 font-semibold pt-1">✓ Positive/neutral feedback — logged for insights, no work order needed.</div>
+            ) : (
+              <div className="text-[11px] text-amber-400 font-semibold pt-1">⚠ Actionable issue detected — facilities work order dispatched below.</div>
+            )}
           </div>
         )}
       </div>
