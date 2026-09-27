@@ -10,7 +10,6 @@ import { errorHandler as errorMiddleware, notFoundHandler } from './middleware/e
 
 const app = express();
 
-<<<<<<< Updated upstream
 // Secure defaults. The browser normally talks to Vite and Vite proxies /api;
 // direct API access is restricted to configured origins.
 app.disable('x-powered-by');
@@ -28,14 +27,8 @@ app.use(cors({
   credentials: true,
 }));
 app.use(rateLimit({ windowMs: 60 * 1000, max: 240, standardHeaders: true, legacyHeaders: false }));
-app.use(express.json({ limit: '256kb' }));
-app.use(express.urlencoded({ extended: true, limit: '64kb' }));
-=======
-// Middleware
-app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
->>>>>>> Stashed changes
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
