@@ -15,7 +15,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Landing from './pages/Landing';
 import { ThemeProvider } from './ThemeContext';
-import { WorldIntel } from './pages/WorldIntel';
+import LiveIntel from './pages/LiveIntel';
+import WeatherTwin from './pages/WeatherTwin';
+import AICopilot from './components/AICopilot';
 
 const MANAGER_ROLES = ['MANAGER', 'GENERAL_MANAGER', 'SUPER_ADMIN'];
 const SUPERVISOR_ROLES = [...MANAGER_ROLES, 'SUPERVISOR', 'VENDOR_MANAGER'];
@@ -36,7 +38,9 @@ export default function App() {
                 
                 <Route path="/dashboard" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><DashboardPage /></ProtectedRoute>} />
                 <Route path="/time-machine" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><TimeMachine /></ProtectedRoute>} />
-                <Route path="/world-intel" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><WorldIntel /></ProtectedRoute>} />
+                <Route path="/world-intel" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><LiveIntel /></ProtectedRoute>} />
+                <Route path="/live-intel" element={<Navigate to="/world-intel" replace />} />
+                <Route path="/weather-twin" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><WeatherTwin /></ProtectedRoute>} />
                 <Route path="/safe-envelope" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><SafeEnvelope /></ProtectedRoute>} />
                 <Route path="/council" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><CouncilAndApproval /></ProtectedRoute>} />
                 <Route path="/reviews" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><ReviewAndKanban /></ProtectedRoute>} />
@@ -51,6 +55,7 @@ export default function App() {
                 <Route path="*" element={<Navigate to="/login" replace />} />
               </Routes>
             </main>
+            <AICopilot />
           </div>
         </BrowserRouter>
       </AuthProvider>
