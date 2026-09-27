@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { validateEnv } from './config/env';
 import { connectDatabase, disconnectDatabase } from './config/database';
+import { startProactiveLoop } from './services/proactiveService';
 import app from './app';
 
 // Validate environment variables before anything else
@@ -13,7 +14,9 @@ async function bootstrap() {
     // Connect to database
     await connectDatabase();
 
-
+    // Phase 11/35: proactive service engine — prediction → preventive action.
+    // Best-effort background loop; every finding is deduplicated and audited.
+    startProactiveLoop();
 
     // Start HTTP server
     const server = app.listen(PORT, () => {

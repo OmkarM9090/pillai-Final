@@ -40,6 +40,14 @@ import { ROLES } from '../config/constants';
 import { getWorldIntel, askGemini } from '../services/worldIntelService';
 import { listNotifications, markNotificationsRead } from '../controllers/notification.controller';
 import { createIncident, listIncidents, updateIncident } from '../controllers/incident.controller';
+import {
+  approveGuestRequest,
+  declineGuestRequest,
+  modifyGuestRequest,
+  getManagerFeedback,
+  getObservations,
+  addTaskObservation,
+} from '../controllers/workflow.controller';
 
 const router = Router();
 
@@ -85,6 +93,19 @@ router.get('/staff', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, RO
 
 router.get('/guest-requests', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN, ROLES.GUEST), getGuestRequests);
 
+// Manager guest-request decisions: APPROVE / DECLINE / MODIFY (Phase 6 — real, audited backend ops)
+const MANAGER_ROLES_LIST = [ROLES.MANAGER, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN] as const;
+for (const base of ['/guest-requests', '/manager/guest-requests']) {
+  router.patch(`${base}/:id/approve`, authenticate, authorize(...MANAGER_ROLES_LIST), approveGuestRequest);
+  router.patch(`${base}/:id/decline`, authenticate, authorize(...MANAGER_ROLES_LIST), declineGuestRequest);
+  router.patch(`${base}/:id/modify`, authenticate, authorize(...MANAGER_ROLES_LIST), modifyGuestRequest);
+}
+router.get('/manager/guest-requests', authenticate, authorize(...MANAGER_ROLES_LIST, ROLES.SUPERVISOR), getGuestRequests);
+router.get('/manager/feedback', authenticate, authorize(...MANAGER_ROLES_LIST, ROLES.SUPERVISOR), getManagerFeedback);
+router.get('/manager/observations', authenticate, authorize(...MANAGER_ROLES_LIST, ROLES.SUPERVISOR), getObservations);
+// Also expose observations/feedback on the supervisor-visible staff monitor
+router.get('/observations', authenticate, authorize(...MANAGER_ROLES_LIST, ROLES.SUPERVISOR), getObservations);
+
 // ==========================================
 // SIMULATION & DIGITAL TWIN ROUTES
 // ==========================================
@@ -112,6 +133,17 @@ router.patch('/worker-tasks/:id/reject', authenticate, authorize(ROLES.WORKER, R
 router.patch('/worker-tasks/:id/block', authenticate, authorize(ROLES.WORKER, ROLES.SUPERVISOR, ROLES.MANAGER, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), blockWorkerTask);
 router.patch('/worker-tasks/:id/start', authenticate, authorize(ROLES.WORKER, ROLES.SUPERVISOR, ROLES.MANAGER, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), startWorkerTask);
 router.patch('/worker-tasks/:taskId/complete', authenticate, authorize(ROLES.WORKER, ROLES.SUPERVISOR, ROLES.MANAGER, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), completeWorkerTask);
+// Phase 9: staff on-site observation (linked to staff + task + room + timestamp)
+router.post('/worker-tasks/:id/observation', authenticate, authorize(ROLES.WORKER, ROLES.STAFF, ROLES.SUPERVISOR, ROLES.MANAGER, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), addTaskObservation);
+router.post('/tasks/:id/observation', authenticate, authorize(ROLES.WORKER, ROLES.STAFF, ROLES.SUPERVISOR, ROLES.MANAGER, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), addTaskObservation);
+
+// Proactive service engine (Phase 11/35) — on-demand scan + background loop
+router.post('/proactive/scan', authenticate, authorize(...MANAGER_ROLES_LIST, ROLES.SUPERVISOR), async (_req, res) => {
+  try {
+    const { runProactiveScan } = await import('../services/proactiveService');
+    res.json({ success: true, data: await runProactiveScan() });
+  } catch (error: any) { res.status(500).json({ success: false, error: error.message }); }
+});
 
 // ==========================================
 // PUBLIC / DEMO / DEV ROUTES

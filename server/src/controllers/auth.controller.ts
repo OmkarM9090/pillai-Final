@@ -96,6 +96,44 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
 }
 
 // ============================================================
+// POST /api/auth/guest-login
+// Phase 2 guest authentication: room number is NOT used as the only secret.
+// Guests authenticate with room number + temporary booking identifier (PIN)
+// issued at check-in. The resulting JWT is scoped to that room only.
+// ============================================================
+export async function guestLogin(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const roomNumber = String(req.body?.room_number ?? '').trim();
+    const bookingReference = String(req.body?.booking_reference ?? '').trim();
+
+    if (!roomNumber || !bookingReference) {
+      sendError(res, 'Room number and booking reference are required.', 422);
+      return;
+    }
+
+    const user = await User.findOne({
+      role: ROLES.GUEST,
+      guestRoomNumber: roomNumber,
+      bookingReference: bookingReference,
+    }).select('+passwordHash');
+
+    // Constant-shape error so room existence can't be enumerated.
+    if (!user || !user.isActive) {
+      sendError(res, 'Invalid room number or booking reference.', 401);
+      return;
+    }
+
+    user.lastLoginAt = new Date();
+    await user.save({ validateBeforeSave: false });
+
+    const token = generateToken({ userId: user._id.toString(), role: user.role });
+    sendSuccess(res, { token, user: user.toSafeJSON() }, 'Guest login successful');
+  } catch (error) {
+    next(error);
+  }
+}
+
+// ============================================================
 // GET /api/auth/me
 // ============================================================
 export async function getMe(req: Request, res: Response, next: NextFunction): Promise<void> {

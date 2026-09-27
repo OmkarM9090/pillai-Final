@@ -25,6 +25,47 @@ export function classifyGuestRequest(text: string): NLPResult {
     is_emergency: false
   };
 
+  // 0. INFORMATIONAL QUESTIONS (Phase 12) — pure service questions must NOT
+  //    create operational tasks. A question only counts as informational when it
+  //    carries no action/emergency signal ("my AC is not working" stays a task).
+  const questionish = /\?\s*$/.test(text.trim()) || /^(what|when|where|how|is |are |do |does |can you tell|could you tell|tell me)/i.test(text.trim());
+  const actionish = /(need|bring|send|more|another|extra|fix|repair|broken|not working|doesn't work|leak|noise|noisy|dirty|clean my|change my|upgrade|move me|too hot|too cold|fire|smoke|doctor|hurt|emergency|complain|unhappy)/i.test(t);
+  if (questionish && !actionish) {
+    result.intent = 'INFORMATION';
+    result.department = 'front_desk';
+    result.autonomy_level = 'AUTO';
+    result.priority = 'P4';
+    result.priority_reason = 'Informational question — answer directly, no dispatch';
+    result.sla_target_response_mins = 1;
+    result.sla_target_resolution_mins = 1;
+    return result;
+  }
+
+  // 0.5 EMERGENCIES FIRST — safety keywords must win over everything else
+  //     (e.g. "smoke in the bathroom" must never classify as TOWEL via 'bath').
+  if (t.includes('doctor') || t.includes('hurt') || t.includes('pain') || t.includes('medical') || t.includes('bleed') || t.includes('heart') || t.includes('unconscious') || t.includes('drown') || t.includes('not breathing') || t.includes('ambulance')) {
+    result.intent = 'MEDICAL';
+    result.department = 'security';
+    result.is_emergency = true;
+    result.autonomy_level = 'CRITICAL';
+    result.priority = 'P0';
+    result.priority_reason = 'Possible medical emergency detected.';
+    result.sla_target_response_mins = 2;
+    result.sla_target_resolution_mins = 15;
+    return result;
+  }
+  if (t.includes('fire') || t.includes('smoke') || t.includes('gas leak') || t.includes('explosion') || t.includes('flood') || t.includes('short circuit') || t.includes('spark')) {
+    result.intent = 'SAFETY';
+    result.department = 'security';
+    result.is_emergency = true;
+    result.autonomy_level = 'CRITICAL';
+    result.priority = 'P0';
+    result.priority_reason = 'Immediate threat to life or property detected.';
+    result.sla_target_response_mins = 2;
+    result.sla_target_resolution_mins = 15;
+    return result;
+  }
+
   // 1. INTENT & DEPARTMENT
   if (t.includes('towel') || t.includes('bath')) {
     result.intent = 'TOWEL';

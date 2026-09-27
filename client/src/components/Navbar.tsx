@@ -16,16 +16,17 @@ export default function Navbar() {
   }
 
   const navItems = {
+    // Final manager navigation (Phase 14/41): Safe Envelope, Decision Council and
+    // the standalone Staff Roster are retired from navigation — their logic lives
+    // inside the Command Center and the Time Machine instead.
     executive: [
       { name: 'Command Center', path: '/dashboard' },
+      { name: 'Guest Requests', path: '/guest-requests' },
+      { name: 'Time Machine', path: '/time-machine' },
       { name: 'Live Intel', path: '/world-intel' },
       { name: 'Weather Twin', path: '/weather-twin' },
-      { name: 'Time Machine', path: '/time-machine' },
-      { name: 'Safe Envelope', path: '/safe-envelope' },
-      { name: 'Decision Council', path: '/council' },
       { name: 'Review & Kanban', path: '/reviews' },
-      { name: 'Systemic Incidents', path: '/incidents' },
-      { name: 'Staff Roster', path: '/roster' },
+      { name: 'Incidents', path: '/incidents' },
     ],
     guest: [
       { name: 'Guest Portal', path: '/guest' }
