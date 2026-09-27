@@ -1,7 +1,7 @@
 {
   "name": "smart-resort-360",
   "version": "1.0.0",
-  "description": "Smart Resort 360 — AI-powered resort operations, guest experience, and revenue intelligence platform",
+  "description": "Smart Resort 360 \u2014 AI-powered resort operations, guest experience, and revenue intelligence platform",
   "private": true,
   "scripts": {
     "dev:server": "cd server && npm run dev",
@@ -10,9 +10,17 @@
     "build:client": "cd client && npm run build",
     "start:server": "cd server && npm run start",
     "seed": "cd server && npm run seed",
-    "install:all": "cd server && npm install && cd ../client && npm install"
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "db:local": "cd server && npm run db:local",
+    "seed:all": "cd server && npm run seed:all"
   },
-  "keywords": ["resort", "management", "SaaS", "AI", "operations"],
+  "keywords": [
+    "resort",
+    "management",
+    "SaaS",
+    "AI",
+    "operations"
+  ],
   "author": "",
   "license": "ISC"
 }

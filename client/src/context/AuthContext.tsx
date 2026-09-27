@@ -22,8 +22,8 @@ interface AuthContextValue {
 // ============================================================
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const TOKEN_KEY = 'auth_token';
-const USER_KEY = 'auth_user';
+const TOKEN_KEY = 'token';
+const USER_KEY = 'user';
 
 // ============================================================
 // Provider

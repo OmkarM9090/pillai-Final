@@ -1,4 +1,5 @@
 import { Room } from '../../models/Room';
+import { dateGte } from '../../utils/dbCompat';
 import { StaffRoster } from '../../models/StaffRoster';
 import { GuestRequest } from '../../models/GuestRequest';
 import { OperationalTicket } from '../../models/OperationalTicket';
@@ -90,7 +91,7 @@ export async function getCommandCenterState() {
   const criticalInventory = await PantryInventory.find({ $expr: { $lte: ['$current_stock_kg', '$safety_threshold_kg'] } });
   
   // 6. Maintenance Health
-  const criticalAssets = await MaintenanceAsset.find({ health_score: { $lt: 40 } });
+  const criticalAssets = await MaintenanceAsset.find({ condition_score: { $lt: 40 } });
 
   // 7. Guest Experience Health
   const activeGuestRequests = await GuestRequest.countDocuments({ status: { $in: ['CREATED', 'ROUTED', 'ASSIGNED', 'ACCEPTED', 'IN_PROGRESS'] } });
@@ -118,12 +119,12 @@ export async function getCommandCenterState() {
   
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
-  const completedTodayTasks = await GuestRequest.countDocuments({ status: 'COMPLETED', completed_at: { $gte: startOfDay } });
-  const completedTodayTickets = await OperationalTicket.countDocuments({ status: 'completed', updatedAt: { $gte: startOfDay } });
+  const completedTodayTasks = await GuestRequest.collection.countDocuments({ status: { $in: ['COMPLETED', 'VERIFIED', 'feedback_received'] }, ...dateGte('completed_at', startOfDay) } as any);
+  const completedTodayTickets = await OperationalTicket.collection.countDocuments({ status: 'completed', ...dateGte('updatedAt', startOfDay) } as any);
   const completedToday = completedTodayTasks + completedTodayTickets;
 
   // Rough estimation of avg resolution time for today
-  const completedRequests = await GuestRequest.find({ status: 'COMPLETED', completed_at: { $gte: startOfDay } });
+  const completedRequests: any[] = await GuestRequest.collection.find({ status: { $in: ['COMPLETED', 'VERIFIED', 'feedback_received'] }, ...dateGte('completed_at', startOfDay) } as any).toArray();
   let avgResolutionTime = 24; // fallback default 24 min
   if (completedRequests.length > 0) {
     let totalMins = 0;
@@ -175,7 +176,7 @@ export async function getCommandCenterState() {
   }));
 
   // Potential Clusters (Systemic Issues)
-  const recentRequests = await GuestRequest.find({ status: { $ne: 'COMPLETED' }, created_at: { $gte: new Date(Date.now() - 4 * 60 * 60 * 1000) } });
+  const recentRequests: any[] = await GuestRequest.collection.find({ status: { $ne: 'COMPLETED' }, ...dateGte('created_at', new Date(Date.now() - 4 * 60 * 60 * 1000)) } as any).toArray();
   const groups: Record<string, any[]> = {};
   for (const req of recentRequests) {
     if (!req.intent) continue;
