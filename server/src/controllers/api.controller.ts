@@ -42,10 +42,22 @@ async function assertTaskAccess(req: Request, task: any): Promise<boolean> {
   if (isManager(req) || req.user?.role === 'SUPERVISOR') return true;
   const assigned = task.assigned_staff || task.assigned_to;
   if (req.user?.role === 'WORKER' || req.user?.role === 'STAFF') {
+    // A worker may action a task when it is assigned to them, or when it sits in
+    // their own department's shared queue (server-enforced, never client-trusted).
     if (!assigned) return true;
     if (assigned === req.user.name) return true;
-    if (req.user.department && task.department && req.user.department.toLowerCase() === task.department.toLowerCase()) return true;
-    return true;
+    let ownName = req.user.name;
+    let ownDept = req.user.department?.toLowerCase();
+    if (req.user.staffId) {
+      try {
+        const linked = await StaffRoster.findById(req.user.staffId).select('name department');
+        if (linked?.name) ownName = linked.name;
+        if (linked?.department) ownDept = linked.department;
+      } catch { /* ignore */ }
+    }
+    if (assigned === ownName) return true;
+    if (ownDept && task.department && ownDept === String(task.department).toLowerCase()) return true;
+    return false;
   }
   return false;
 }
@@ -565,7 +577,24 @@ export const getWorkerTasks = async (req: Request, res: Response) => {
     }
     const guestRequests = await GuestRequest.find({ assigned_staff: staffName }).sort({ created_at: -1 });
     const operationalTickets = await OperationalTicket.find({ assigned_to: staffName }).sort({ createdAt: -1 });
-    res.json({ success: true, staffName, guestRequests, operationalTickets });
+
+    // Shared department queue: a worker also sees unassigned/other-workers' tasks
+    // for their own department so no request is stranded when the first pick is busy.
+    let departmentQueue: any = { guestRequests: [], operationalTickets: [] };
+    let ownDepartment: string | undefined = req.user?.department?.toLowerCase();
+    if (req.user?.staffId) {
+      try {
+        const linked = await StaffRoster.findById(req.user.staffId).select('department');
+        if (linked?.department) ownDepartment = linked.department;
+      } catch { /* ignore */ }
+    }
+    if ((req.user?.role === 'WORKER' || req.user?.role === 'STAFF') && ownDepartment) {
+      const closedStatuses = ['COMPLETED', 'VERIFIED', 'DECLINED', 'REJECTED', 'completed', 'closed'];
+      const pendingReqs = await GuestRequest.find({ department: ownDepartment, assigned_staff: { $ne: staffName }, status: { $nin: closedStatuses } }).sort({ created_at: -1 }).limit(25);
+      const pendingTickets = await OperationalTicket.find({ department: ownDepartment, assigned_to: { $ne: staffName }, status: { $nin: closedStatuses } }).sort({ createdAt: -1 }).limit(25);
+      departmentQueue = { guestRequests: pendingReqs, operationalTickets: pendingTickets };
+    }
+    res.json({ success: true, staffName, ownDepartment, guestRequests, operationalTickets, departmentQueue });
   } catch (error) {
     console.error('getWorkerTasks error:', error);
     res.status(500).json({ success: false, error: String(error), message: 'Unable to load assigned tasks' });
@@ -613,9 +642,16 @@ export const rejectWorkerTask = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const { reason } = req.body;
+    // Phase 7: rejecting / marking unavailable REQUIRES a persisted reason.
+    if (!reason || !String(reason).trim()) {
+      return res.status(422).json({ success: false, message: 'A rejection reason is required' });
+    }
     const reqDoc: any = await findTaskByExternalId(id);
     if (!reqDoc) return res.status(404).json({ success: false, message: 'Task not found' });
     if (!(await assertTaskAccess(req, reqDoc))) return res.status(403).json({ success: false, message: 'You may only action tasks assigned to you' });
+    if (['COMPLETED', 'VERIFIED', 'completed', 'DECLINED'].includes(reqDoc.status)) {
+      return res.status(409).json({ success: false, message: `Task is already ${reqDoc.status}` });
+    }
     
     // Auto-reassign logic
     const department = reqDoc.department;
@@ -691,14 +727,22 @@ export const completeWorkerTask = async (req: Request, res: Response) => {
   try {
     const taskId = req.params.taskId as string;
     const { completion_note } = req.body;
+    // Phase 7: completion requires a note — there are no fake completion buttons.
+    if (!completion_note || !String(completion_note).trim()) {
+      return res.status(422).json({ success: false, message: 'A completion note is required' });
+    }
     const reqDoc: any = await findTaskByExternalId(taskId);
     if (!reqDoc) return res.status(404).json({ success: false, message: 'Task not found' });
     if (!(await assertTaskAccess(req, reqDoc))) return res.status(403).json({ success: false, message: 'You may only action tasks assigned to you' });
+    const activeStatuses = ['ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'assigned', 'acknowledged', 'in_progress', 'todo', 'created'];
+    if (!activeStatuses.includes(reqDoc.status)) {
+      return res.status(409).json({ success: false, message: `Task is already ${reqDoc.status}` });
+    }
 
     const staff_name = req.user?.name;
     reqDoc.status = reqDoc.ticket_id ? 'completed' : 'COMPLETED';
-    if (reqDoc.ticket_id) reqDoc.completed_at = new Date();
-    if (reqDoc.completion_note !== undefined) reqDoc.completion_note = String(completion_note ?? 'Completed by staff').slice(0, 500);
+    reqDoc.completed_at = new Date();
+    reqDoc.completion_note = String(completion_note ?? 'Completed by staff').slice(0, 500);
     if (reqDoc.resolution_notes !== undefined) reqDoc.resolution_notes = String(completion_note ?? 'Completed by staff').slice(0, 500);
     await reqDoc.save();
 
@@ -799,24 +843,51 @@ export const feedbackGuestRequest = async (req: Request, res: Response) => {
     // Accept both naming conventions (client sends feedback/rating)
     const guest_feedback = req.body.guest_feedback ?? req.body.feedback;
     const guest_rating = req.body.guest_rating ?? req.body.rating;
-    
+    const rating = Number(guest_rating);
+    if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+      return res.status(422).json({ success: false, message: 'A rating between 1 and 5 is required' });
+    }
+
     const filter: Record<string, unknown> = { request_id: requestId };
     if (req.user?.role === 'GUEST') {
       const roomNum = req.user.guestRoomNumber || '105';
       filter.$or = [{ guest_user_id: req.user._id }, { room_number: roomNum }];
     }
 
-    const reqDoc = await GuestRequest.findOneAndUpdate(
-      filter,
-      { 
-        guest_rating: Number(guest_rating) || 5,
-        guest_feedback: String(guest_feedback || '').slice(0, 500),
-        status: 'VERIFIED'
-      },
-      { new: true }
-    );
+    const existing = await GuestRequest.findOne(filter);
+    if (!existing) return res.status(404).json({ success: false, message: 'Request not found or unauthorized' });
 
-    if (!reqDoc) return res.status(404).json({ success: false, message: 'Request not found or unauthorized' });
+    // Phase 10 gate: feedback is ONLY accepted once the task is actually completed,
+    // and only once per request.
+    if (existing.status === 'VERIFIED' || existing.guest_rating != null) {
+      return res.status(409).json({ success: false, message: 'Feedback was already submitted for this request' });
+    }
+    if (existing.status !== 'COMPLETED') {
+      return res.status(409).json({ success: false, message: `Feedback opens after the request is completed (current status: ${existing.status})` });
+    }
+
+    existing.guest_rating = rating;
+    existing.guest_feedback = String(guest_feedback || '').slice(0, 500);
+    existing.status = 'VERIFIED';
+    const reqDoc = await existing.save();
+
+    await AuditLog.create({
+      user_name: req.user?.name ?? 'Guest',
+      user_role: req.user?.role,
+      action_type: 'GUEST_FEEDBACK_SUBMITTED',
+      entity_type: 'GuestRequest',
+      entity_id: reqDoc.request_id,
+      new_state: { guest_rating: rating },
+    });
+    await notifyManagers({
+      type: 'GUEST_FEEDBACK_RECEIVED',
+      priority: rating <= 2 ? 'HIGH' : 'LOW',
+      sourceType: 'GuestRequest',
+      sourceId: reqDoc.request_id,
+      title: `Guest feedback: ${rating}★ — Room ${reqDoc.room_number}`,
+      message: `${reqDoc.assigned_staff ?? 'Unassigned staff'} completed "${reqDoc.request_text.slice(0, 100)}". Guest rated ${rating}/5${reqDoc.guest_feedback ? `: "${reqDoc.guest_feedback.slice(0, 120)}"` : '.'}`,
+      departments: [reqDoc.department],
+    });
 
     if (Number(guest_rating) <= 2 || guest_feedback?.toLowerCase().includes('not resolved')) {
       await ActionCard.create({

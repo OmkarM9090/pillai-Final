@@ -29,7 +29,7 @@ const OperationalTicketSchema = new Schema<IOperationalTicket>({
   department: { type: String, required: true },
   priority: { type: String, enum: ['Critical', 'High', 'Medium', 'Low'], default: 'Medium' },
   status: { type: String, enum: ['created', 'todo', 'assigned', 'notified', 'acknowledged', 'in_progress', 'blocked', 'completed', 'verified', 'closed', 'rejected', 'escalated', 'ACKNOWLEDGED'], default: 'created' },
-  source: { type: String, enum: ['review', 'maintenance', 'guest_request', 'system'], default: 'system' },
+  source: { type: String, enum: ['review', 'maintenance', 'guest_request', 'system', 'staff_observation', 'proactive'], default: 'system' },
   room_number: { type: String },
   assigned_to: { type: String },
   sla_deadline: { type: Date },

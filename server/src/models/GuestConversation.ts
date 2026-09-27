@@ -24,7 +24,7 @@ const GuestConversationSchema = new Schema<IGuestConversation>({
   category: { type: String, required: true },
   priority: { type: String, required: true },
   autonomy_level: { type: String, required: true },
-  request_id: { type: String, required: true },
+  request_id: { type: String },
   status: { type: String, required: true },
   estimated_minutes: { type: Number, required: true },
   created_at: { type: Date, default: Date.now }

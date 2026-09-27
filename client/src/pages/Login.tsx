@@ -7,8 +7,11 @@ import useIsMobile from '../hooks/useIsMobile';
 
 export default function Login() {
   const isMobile = useIsMobile();
+  const [mode, setMode] = useState<'staff' | 'guest'>('staff');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [roomNumber, setRoomNumber] = useState('');
+  const [bookingRef, setBookingRef] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -20,12 +23,16 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/v1/auth/login', {
+      const res = await fetch(mode === 'guest' ? '/api/v1/auth/guest-login' : '/api/v1/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(
+          mode === 'guest'
+            ? { room_number: roomNumber, booking_reference: bookingRef }
+            : { email, password }
+        ),
       });
 
       const data = await res.json();
@@ -103,11 +110,27 @@ export default function Login() {
           </span>
         </div>
 
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
+          {([['staff', 'Staff & Managers'], ['guest', 'Guest (check-in)']] as const).map(([m, label]) => (
+            <button key={m} type="button" onClick={() => { setMode(m); setError(null); }}
+              style={{
+                flex: 1, padding: '0.6rem', borderRadius: '0.7rem', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer',
+                border: mode === m ? '1.5px solid var(--accent)' : '1.5px solid var(--border-color)',
+                background: mode === m ? 'var(--accent)' : 'var(--bg-secondary)',
+                color: mode === m ? 'var(--on-accent)' : 'var(--text-muted)',
+              }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
         <h1 className="font-display" style={{ fontSize: 'clamp(1.5rem, 3vw, 1.85rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
-          Manager sign in
+          {mode === 'staff' ? 'Manager sign in' : 'Guest sign in'}
         </h1>
         <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: 1.5 }}>
-          Access the dashboard to review simulations, rosters and prescriptive actions.
+          {mode === 'staff'
+            ? 'Access the dashboard to review simulations, rosters and prescriptive actions.'
+            : 'Use your room number and the booking reference from check-in. Demo: Room 105 · BK-RESORT-105.'}
         </p>
 
         {error && (
@@ -117,28 +140,58 @@ export default function Login() {
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ position: 'relative' }}>
-            <Mail size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input
-              type="email"
-              placeholder="Work email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={inputStyle}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <Lock size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={inputStyle}
-            />
-          </div>
+          {mode === 'staff' ? (
+            <>
+              <div style={{ position: 'relative' }}>
+                <Mail size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="email"
+                  placeholder="Work email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ position: 'relative' }}>
+                <Lock size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ position: 'relative' }}>
+                <Mail size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Room number (e.g. 105)"
+                  value={roomNumber}
+                  onChange={(e) => setRoomNumber(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ position: 'relative' }}>
+                <Lock size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="password"
+                  placeholder="Booking reference (e.g. BK-RESORT-105)"
+                  value={bookingRef}
+                  onChange={(e) => setBookingRef(e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+              </div>
+            </>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.01 }}

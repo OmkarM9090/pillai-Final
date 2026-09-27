@@ -2,13 +2,11 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import { DashboardPage } from './pages/DashboardPage';
 import { TimeMachine } from './pages/TimeMachine';
-import { SafeEnvelope } from './pages/SafeEnvelope';
-import { CouncilAndApproval } from './pages/CouncilAndApproval';
 import { ReviewAndKanban } from './pages/ReviewAndKanban';
+import { GuestRequestsPage } from './pages/GuestRequestsPage';
 import { GuestPortal } from './pages/GuestPortal';
 import { WorkerPortal } from './pages/WorkerPortal';
 import { IncidentsAndReallocation } from './pages/IncidentsAndReallocation';
-import { RosterPlanner } from './pages/RosterPlanner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -37,15 +35,18 @@ export default function App() {
                 <Route path="/" element={<Landing />} />
                 
                 <Route path="/dashboard" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><DashboardPage /></ProtectedRoute>} />
+                <Route path="/guest-requests" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><GuestRequestsPage /></ProtectedRoute>} />
                 <Route path="/time-machine" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><TimeMachine /></ProtectedRoute>} />
                 <Route path="/world-intel" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><LiveIntel /></ProtectedRoute>} />
                 <Route path="/live-intel" element={<Navigate to="/world-intel" replace />} />
                 <Route path="/weather-twin" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><WeatherTwin /></ProtectedRoute>} />
-                <Route path="/safe-envelope" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><SafeEnvelope /></ProtectedRoute>} />
-                <Route path="/council" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><CouncilAndApproval /></ProtectedRoute>} />
                 <Route path="/reviews" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><ReviewAndKanban /></ProtectedRoute>} />
                 <Route path="/incidents" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><IncidentsAndReallocation /></ProtectedRoute>} />
-                <Route path="/roster" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><RosterPlanner /></ProtectedRoute>} />
+                {/* Phase 14: retired sections redirect into the Command Center; their
+                    decision logic remains available via the dashboard and Time Machine. */}
+                <Route path="/safe-envelope" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/council" element={<Navigate to="/guest-requests" replace />} />
+                <Route path="/roster" element={<Navigate to="/dashboard" replace />} />
                 
                 <Route path="/guest" element={<ProtectedRoute allowedRoles={['GUEST']}><GuestPortal /></ProtectedRoute>} />
                 

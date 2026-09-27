@@ -15,6 +15,9 @@ export function DashboardPage() {
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [staffList, setStaffList] = useState<any[]>([]);
   const [safeEnvelope, setSafeEnvelope] = useState<any>(null);
+  const [guestRequests, setGuestRequests] = useState<any[]>([]);
+  const [feedbackData, setFeedbackData] = useState<{ feedback: any[]; average_rating: number | null }>({ feedback: [], average_rating: null });
+  const [observations, setObservations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [creatingMasterTicket, setCreatingMasterTicket] = useState(false);
@@ -27,17 +30,20 @@ export function DashboardPage() {
     try {
       const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
       
-      const [dashRes, acRes, incRes, auditRes, staffRes, safeRes] = await Promise.all([
+      const [dashRes, acRes, incRes, auditRes, staffRes, safeRes, grRes, fbRes, obsRes] = await Promise.all([
         fetch('/api/v1/dashboard', { headers }),
         fetch('/api/v1/action-cards', { headers }),
         fetch('/api/v1/tickets', { headers }),
         fetch('/api/v1/audit-logs', { headers }),
         fetch('/api/v1/staff', { headers }),
-        fetch('/api/v1/safe-envelope', { method: 'POST', headers })
+        fetch('/api/v1/safe-envelope', { method: 'POST', headers }),
+        fetch('/api/v1/guest-requests', { headers }),
+        fetch('/api/v1/manager/feedback', { headers }),
+        fetch('/api/v1/manager/observations', { headers })
       ]);
 
-      const [dashJson, acJson, incJson, auditJson, staffJson, safeJson] = await Promise.all([
-        dashRes.json(), acRes.json(), incRes.json(), auditRes.json(), staffRes.json(), safeRes.json()
+      const [dashJson, acJson, incJson, auditJson, staffJson, safeJson, grJson, fbJson, obsJson] = await Promise.all([
+        dashRes.json(), acRes.json(), incRes.json(), auditRes.json(), staffRes.json(), safeRes.json(), grRes.json(), fbRes.json(), obsRes.json()
       ]);
 
       if (dashJson.success) setDashboardData(dashJson.data);
@@ -46,6 +52,9 @@ export function DashboardPage() {
       if (auditJson.success) setAuditLogs(auditJson.data);
       if (staffJson.success) setStaffList(staffJson.data);
       if (safeJson.success) setSafeEnvelope(safeJson.data);
+      if (grJson.success) setGuestRequests(grJson.data);
+      if (fbJson.success) setFeedbackData(fbJson.data);
+      if (obsJson.success) setObservations(obsJson.data);
 
       setLastUpdated(new Date());
     } catch (err) {
@@ -123,13 +132,18 @@ export function DashboardPage() {
 
   const navItems = [
     { id: 'overview', label: 'Overview' },
+    { id: 'guests', label: 'Guests' },
     { id: 'decisions', label: 'Decisions' },
     { id: 'staff', label: 'Staff' },
+    { id: 'feedback', label: 'Feedback & Observations' },
     { id: 'incidents', label: 'Incidents' },
     { id: 'systemic', label: 'Systemic Issues' },
     { id: 'resilience', label: 'Resilience' },
     { id: 'audit', label: 'Audit' }
   ];
+
+  const pendingGuestApprovals = guestRequests.filter((r: any) => ['PENDING_APPROVAL', 'CLASSIFIED'].includes(r.status));
+  const activeGuestRequests = guestRequests.filter((r: any) => ['ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'CREATED', 'ROUTED'].includes(r.status));
 
   return (
     <div className="min-h-screen bg-[#0B1120] pb-20 font-sans text-slate-300">
@@ -202,6 +216,49 @@ export function DashboardPage() {
             <span className="text-indigo-400">L2 SUP {autonomyDistribution?.L2 || 0}%</span>
             <span className="text-amber-400">L3 MGR {autonomyDistribution?.L3 || 0}%</span>
             <span className="text-rose-400">L4 CRIT {autonomyDistribution?.L4 || 0}%</span>
+          </div>
+        </section>
+
+        {/* GUEST REQUESTS SNAPSHOT — drillable into the dedicated manager section */}
+        <section id="guests" className="bg-slate-900 border border-slate-800 rounded-xl shadow-xl overflow-hidden">
+          <div className="flex justify-between items-center px-6 pt-5 pb-4 border-b border-slate-800">
+            <h2 className="text-sm font-black text-white uppercase tracking-widest">Guest Requests — Live</h2>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold">{pendingGuestApprovals.length} awaiting decision</span>
+              <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 font-bold">{activeGuestRequests.length} in execution</span>
+              <a href="/guest-requests" className="text-indigo-400 hover:text-indigo-300 font-bold uppercase tracking-wider">Open Guest Requests →</a>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="bg-slate-950 text-[10px] uppercase tracking-widest text-slate-500 border-b border-slate-800">
+                  <th className="p-3 font-bold">ID</th>
+                  <th className="p-3 font-bold">Room</th>
+                  <th className="p-3 font-bold">Request</th>
+                  <th className="p-3 font-bold">Priority</th>
+                  <th className="p-3 font-bold">Dept</th>
+                  <th className="p-3 font-bold">Status</th>
+                  <th className="p-3 font-bold">Staff</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/50">
+                {[...pendingGuestApprovals, ...activeGuestRequests].slice(0, 7).map((r: any) => (
+                  <tr key={r.request_id} className="hover:bg-slate-800/30 transition">
+                    <td className="p-3 font-bold text-white text-xs">{r.request_id}</td>
+                    <td className="p-3 text-slate-300 text-xs">{r.room_number}</td>
+                    <td className="p-3 text-slate-300 text-xs max-w-[260px] truncate">{r.request_text}</td>
+                    <td className="p-3"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${['CRITICAL','HIGH','P0','P1'].includes(r.priority) ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-700 text-slate-300'}`}>{r.priority}</span></td>
+                    <td className="p-3 text-slate-400 text-xs capitalize">{r.department}</td>
+                    <td className="p-3"><span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${['PENDING_APPROVAL','CLASSIFIED'].includes(r.status) ? 'bg-amber-500/20 text-amber-400' : ['COMPLETED','VERIFIED'].includes(r.status) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'}`}>{String(r.status).replace('_',' ')}</span></td>
+                    <td className="p-3 text-slate-300 text-xs">{r.assigned_staff || '—'}</td>
+                  </tr>
+                ))}
+                {[...pendingGuestApprovals, ...activeGuestRequests].length === 0 && (
+                  <tr><td colSpan={7} className="p-6 text-center text-slate-500 italic text-sm">No guest requests in flight right now.</td></tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </section>
 
@@ -440,6 +497,57 @@ export function DashboardPage() {
             </div>
           </section>
 
+        </div>
+
+        {/* FEEDBACK & STAFF OBSERVATIONS (Phase 8/9/10) */}
+        <div id="feedback" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-[380px] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-sm font-black text-white uppercase tracking-widest">Guest Feedback</h2>
+              {feedbackData.average_rating != null && (
+                <span className="text-amber-400 font-black">{feedbackData.average_rating}★ <span className="text-[10px] text-slate-500 font-bold">avg</span></span>
+              )}
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {feedbackData.feedback.length === 0 ? (
+                <div className="text-slate-500 text-sm italic text-center py-10">Feedback appears here once completed tasks are rated by guests.</div>
+              ) : feedbackData.feedback.slice(0, 10).map((f: any) => (
+                <div key={f.request_id} className="bg-slate-800/50 border border-slate-700/60 rounded-xl p-3.5">
+                  <div className="flex justify-between">
+                    <span className="text-amber-400 text-sm">{'★'.repeat(f.guest_rating)}{'☆'.repeat(5 - f.guest_rating)}</span>
+                    <span className="text-[10px] text-slate-500">Room {f.room_number} · {f.request_id}</span>
+                  </div>
+                  <div className="text-sm text-slate-200 mt-1.5">“{f.guest_feedback || 'No written comment'}”</div>
+                  <div className="text-[10px] text-slate-500 mt-1.5">by <span className="text-slate-300 font-bold">{f.assigned_staff || '—'}</span> · {f.department}{f.completed_at ? ` · done ${new Date(f.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl h-[380px] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-sm font-black text-white uppercase tracking-widest">Staff On-Site Observations</h2>
+              <span className="px-2 py-0.5 bg-teal-500/20 text-teal-300 rounded text-xs font-bold">{observations.length}</span>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {observations.length === 0 ? (
+                <div className="text-slate-500 text-sm italic text-center py-10">When staff spot an unlisted issue on-site, it lands here instantly — routed to the right department.</div>
+              ) : observations.slice(0, 10).map((o: any) => (
+                <div key={o.observation_id} className="bg-slate-800/50 border border-slate-700/60 rounded-xl p-3.5">
+                  <div className="flex justify-between">
+                    <span className="text-xs font-bold text-white">{o.staff_name} · Room {o.room_number ?? 'n/a'}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${o.status === 'ROUTED' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-700 text-slate-300'}`}>{o.status}</span>
+                  </div>
+                  <div className="text-sm text-slate-200 mt-1.5">“{o.note}”</div>
+                  <div className="text-[10px] text-slate-500 mt-1.5">
+                    {new Date(o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {o.task_id ? ` · during ${o.task_id}` : ''}
+                    {o.routed_ticket_id && <> · ticket <span className="text-indigo-300 font-bold">{o.routed_ticket_id}</span> → {o.department}</>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
         {/* SECTION 7 & 10 SPLIT */}

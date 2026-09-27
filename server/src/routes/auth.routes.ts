@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
-import { register, login, getMe, logout } from '../controllers/auth.controller';
+import { register, login, getMe, logout, guestLogin } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validate.middleware';
 import { registerSchema, loginSchema } from '../validators/auth.validators';
@@ -33,6 +33,7 @@ const registerLimiter = rateLimit({
 // Public routes
 router.post('/register', registerLimiter, validate(registerSchema), register);
 router.post('/login', authLimiter, validate(loginSchema), login);
+router.post('/guest-login', authLimiter, guestLogin);
 
 // Protected routes
 router.get('/me', authenticate, getMe);

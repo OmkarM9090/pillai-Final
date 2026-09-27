@@ -537,6 +537,20 @@ export async function chat(req: ChatRequest) {
     try {
       const dispatched = await processConciergeMessage(req.guestId, req.roomNumber, message);
       toolResult = dispatched;
+      if (dispatched.action === 'ANSWERED' || !dispatched.requestId) {
+        // Informational question — answered directly, no dispatch trail to cite.
+        return {
+          reply: dispatched.guestResponse,
+          intent: 'request',
+          provider: 'resort-brain',
+          model: 'autonomy-orchestrator',
+          mode: 'TOOL' as const,
+          actions,
+          toolResult,
+          context: publicContext(ctx),
+          latencyMs: 0,
+        };
+      }
       actions.push({
         type: 'SERVICE_REQUEST_CREATED',
         label: `Request ${dispatched.requestId} dispatched`,

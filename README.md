@@ -1,6 +1,20 @@
 # Smart Resort 360
 
-> AI-powered resort operations, guest experience, and revenue intelligence platform.
+> AI-powered resort operations, guest experience, and revenue intelligence platform — one connected operating system:
+> PREDICT → UNDERSTAND → SIMULATE → RECOMMEND → MANAGER APPROVAL → EXECUTE → NOTIFY → STAFF ACTION → RESULT → FEEDBACK.
+
+## 🎬 3-minute judge demo (all flows are live, DB-backed and role-gated)
+
+| # | Actor | Action | What happens (all real) |
+|---|-------|--------|--------------------------|
+| 1 | **GM** | Login → **Command Center** | Live KPIs, staff workload, guest requests, decisions, incidents from MongoDB |
+| 2 | **GM** | **Time Machine** → drag occupancy to **95%** | Trained ML occupancy forecast + digital-twin re-simulation; **Baseline → Scenario → Δ** table (staff gap, F&B, inventory, resilience, GOPPAR) is *computed*, never hardcoded |
+| 3 | **GM** | **Create Action Plan** → approve in **Review & Kanban** | Plan becomes operational ticket, staff assigned, audit logged |
+| 4 | **Worker** (`housekeeper@smartresort.demo`) | Login → **My Tasks** | Sees real dispatch → Accept → Start → log **on-site observation** ("AC leaking") → Complete (note required) |
+| 5 | **GM** | Command Center **Guests / Feedback / Observations** | Observation routed to maintenance (ticket created, dept notified); completion + feedback visible |
+| 6 | **Guest** (Room **105** + PIN **BK-RESORT-105**, or `guest@smartresort.demo`) | Concierge: *"The AC in my room is leaking"* → *"What time is breakfast?"* | Request → NLP → maintenance task (staff notified); question answered **without** creating a task; feedback unlocks only after completion |
+| 7 | **GM** | **Guest Requests** | Room-change request sits in **PENDING_APPROVAL** → **Approve / Decline / Modify** executes against staff, guest notifications and audit |
+| 8 | **GM** | **Live Intel / Weather Twin / Incidents / Proactive** | Weather+social signals with cached fallbacks, geospatial zone map, emergency incident state machine (DETECTED→…→CLOSED), proactive staffing/inventory/maintenance recommendations |
 
 ## 🚀 Hackathon Quick Start (3 terminals, no MongoDB install needed)
 
@@ -16,6 +30,10 @@ npm run dev            # API on http://localhost:5000
 
 # Terminal 3 — frontend
 cd client && npm install && npm run dev   # http://localhost:5173
+
+# Terminal 4 (optional but recommended) — trained-model AI core
+cd ml-server && pip install -r requirements.txt   # pins scikit-learn 1.6.1 (required: models were serialized with it)
+uvicorn main:app --host 0.0.0.0 --port 8000        # falls back deterministically if not running
 ```
 
 ### Demo logins (password: `demo123`)
@@ -26,7 +44,23 @@ cd client && npm install && npm run dev   # http://localhost:5173
 | Supervisor | `housekeeping.supervisor@smartresort.demo` | Dashboard |
 | Worker | `housekeeper@smartresort.demo` | Worker Portal |
 | Guest | `guest@smartresort.demo` | Guest Concierge Portal |
+| Guest (check-in) | Room **105** + PIN **BK-RESORT-105** | `/login` → *Guest (check-in)* tab |
 | Super Admin | `admin@resort360.com` | Dashboard (password: `Admin@123456`) |
+
+### Key workflow APIs (all authenticated, role-authorized, validated, audited)
+
+```
+POST /api/v1/guest-request | /guest/concierge          guest input → NLP → route/assign/escalate
+PATCH /api/v1/guest-requests/:id/approve|decline|modify  real manager decisions (guest/staff notified)
+GET    /api/v1/manager/guest-requests|feedback|observations
+PATCH  /api/v1/worker-tasks/:id/accept|reject|start|complete|block   reject & complete require reasons/notes
+POST   /api/v1/worker-tasks/:id/observation            on-site observation → routed dept ticket
+PATCH  /api/v1/guest-requests/:id/feedback             gated: only after COMPLETED, once
+POST   /api/v1/incidents · PATCH /api/v1/incidents/:id emergency state machine DETECTED→…→CLOSED
+POST   /api/v1/simulate · /generate-plan · /approve-plan   Time Machine → action plan → execution
+POST   /api/v1/proactive/scan                          prediction → preventive action (deduped)
+GET    /api/v1/notifications                           role-targeted, persisted, source-linked
+```
 
 ### 🌩️ Live Intelligence suite (weather · geospatial · social · twin · AI)
 

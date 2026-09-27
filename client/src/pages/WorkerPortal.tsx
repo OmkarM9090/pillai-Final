@@ -1,265 +1,337 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+
+const JWT = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` });
+const OPEN = ['ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'assigned', 'acknowledged', 'in_progress', 'todo', 'created', 'ROUTED'];
+const DONELIST = ['COMPLETED', 'VERIFIED', 'completed', 'DECLINED', 'closed'];
 
 export function WorkerPortal() {
-  const staffOptions = [
-    'Staff H1', 'Staff H2', 
-    'Staff M1', 'Staff M2', 
-    'Staff FNB1', 'Staff FNB2'
-  ];
-  const [currentStaff, setCurrentStaff] = useState('Staff H1');
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({});
+  const { currentUser } = useAuth();
+  const isWorker = currentUser?.role === 'WORKER' || currentUser?.role === 'STAFF';
 
-  const fetchTasks = async () => {
+  // Workers act as themselves ('me' is resolved server-side to their roster identity).
+  // Managers/supervisors can additionally peek at any roster member for demo/oversight.
+  const [viewAs, setViewAs] = useState<string>('me');
+  const [staffOptions, setStaffOptions] = useState<string[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [queue, setQueue] = useState<any[]>([]);
+  const [ownDepartment, setOwnDepartment] = useState<string>('');
+  const [staffName, setStaffName] = useState<string>('');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [completionNotes, setCompletionNotes] = useState<Record<string, string>>({});
+  const [rejectionNotes, setRejectionNotes] = useState<Record<string, string>>({});
+  const [blockNotes, setBlockNotes] = useState<Record<string, string>>({});
+  const [observations, setObservations] = useState<Record<string, string>>({});
+  const [openObs, setOpenObs] = useState<Record<string, boolean>>({});
+
+  const fetchTasks = useCallback(async () => {
     try {
-      const res = await fetch(`/api/v1/worker-tasks/${encodeURIComponent(currentStaff)}`, { 
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } 
-      });
+      const res = await fetch(`/api/v1/worker-tasks/${encodeURIComponent(viewAs)}`, { headers: JWT() });
       const json = await res.json();
       if (json.success) {
+        setStaffName(json.staffName || '');
+        setOwnDepartment(json.ownDepartment || '');
         const combined = [
-          ...json.guestRequests.map((r: any) => ({ ...r, type: 'GuestRequest', id: r.request_id })),
-          ...json.operationalTickets.map((t: any) => ({ ...t, type: 'OperationalTicket', id: t.ticket_id }))
+          ...(json.guestRequests || []).map((r: any) => ({ ...r, type: 'GuestRequest', id: r.request_id })),
+          ...(json.operationalTickets || []).map((t: any) => ({ ...t, type: 'OperationalTicket', id: t.ticket_id })),
         ];
-        combined.sort((a, b) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
+        combined.sort((a: any, b: any) => new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime());
         setTasks(combined);
+        const dq = [
+          ...(json.departmentQueue?.guestRequests || []).map((r: any) => ({ ...r, type: 'GuestRequest', id: r.request_id })),
+          ...(json.departmentQueue?.operationalTickets || []).map((t: any) => ({ ...t, type: 'OperationalTicket', id: t.ticket_id })),
+        ];
+        setQueue(dq);
+        setError(null);
       }
-    } catch (err) {
-      console.error(err);
+      const nRes = await fetch('/api/v1/notifications', { headers: JWT() });
+      const nJson = await nRes.json();
+      if (nJson.success) setNotifications(nJson.data.notifications.slice(0, 6));
+    } catch {
+      setError('Connectivity issue — retrying automatically.');
     }
-  };
+  }, [viewAs]);
 
   useEffect(() => {
     fetchTasks();
-    const interval = setInterval(fetchTasks, 3000); // Polling for fast state updates
+    const interval = setInterval(fetchTasks, 4000); // polling fallback for realtime
     return () => clearInterval(interval);
-  }, [currentStaff]);
+  }, [fetchTasks]);
 
-  const [rejectionNotes, setRejectionNotes] = useState<Record<string, string>>({});
-  const [blockNotes, setBlockNotes] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!isWorker) {
+      fetch('/api/v1/staff', { headers: JWT() }).then(r => r.json()).then(j => {
+        if (j.success) setStaffOptions(j.data.map((s: any) => s.name));
+      }).catch(() => undefined);
+    }
+  }, [isWorker]);
 
-  const handleAction = async (taskId: string, action: 'accept' | 'reject' | 'start' | 'complete' | 'block') => {
-    setLoading(true);
+  const act = async (taskId: string, action: string, body: any) => {
+    setLoading(taskId + action);
+    setToast(null);
     try {
-      let body: any = {};
-      if (action === 'complete') {
-        body = { completion_note: completionNotes[taskId] || 'Completed via App', staff_name: currentStaff };
-      } else if (action === 'reject') {
-        body = { reason: rejectionNotes[taskId] || 'Other' };
-      } else if (action === 'block') {
-        body = { reason: blockNotes[taskId] || 'Other' };
-      }
-
-      await fetch(`/api/v1/worker-tasks/${taskId}/${action}`, {
+      const res = await fetch(`/api/v1/worker-tasks/${taskId}/${action}`, {
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+        headers: { ...JWT(), 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      
-      fetchTasks();
-    } catch (err) {
-      console.error(err);
+      const json = await res.json();
+      if (!json.success) setToast(`⚠ ${json.message || 'Action failed'}`);
+      else {
+        if (action === 'complete') setToast(`✓ ${taskId} completed — guest can now leave feedback`);
+        await fetchTasks();
+      }
+      return json;
+    } catch {
+      setToast('⚠ Network error — not saved.');
+      return null;
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
-  const activeTasks = tasks.filter(t => !['COMPLETED', 'VERIFIED', 'REJECTED', 'completed', 'feedback_received'].includes(t.status));
-  const completedTasks = tasks.filter(t => ['COMPLETED', 'VERIFIED', 'completed', 'feedback_received'].includes(t.status));
+  const submitObservation = async (task: any) => {
+    const note = (observations[task.id] || '').trim();
+    if (note.length < 3) { setToast('⚠ Enter an observation first.'); return; }
+    setLoading(task.id + 'obs');
+    try {
+      const res = await fetch(`/api/v1/worker-tasks/${task.id}/observation`, {
+        method: 'POST',
+        headers: { ...JWT(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note, room_number: task.room_number }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        const t = json.data?.routed_ticket;
+        setToast(t ? `✓ Observation logged & routed to ${t.department} (${t.ticket_id})` : '✓ Observation logged for the duty manager');
+        setObservations({ ...observations, [task.id]: '' });
+        setOpenObs({ ...openObs, [task.id]: false });
+      } else {
+        setToast(`⚠ ${json.message || 'Observation failed'}`);
+      }
+    } catch {
+      setToast('⚠ Network error — observation not saved.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const activeTasks = tasks.filter(t => OPEN.includes(t.status));
+  const completedTasks = tasks.filter(t => DONELIST.includes(t.status));
+
+  const taskCard = (task: any, isQueue = false) => {
+    const myTask = !isQueue;
+    return (
+      <div key={task.id} className={`bg-slate-900 border rounded-xl p-5 shadow-lg border-l-4 ${isQueue ? 'border-slate-700 border-l-slate-500' : 'border-slate-700 border-l-indigo-500'}`}>
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-md text-[11px] font-bold">{task.id}</span>
+              <span className="text-slate-400 text-sm">Room {task.room_number || 'N/A'}</span>
+              {isQueue && <span className="px-2 py-0.5 bg-slate-700 text-slate-300 rounded text-[10px] uppercase font-bold">Dept queue · {task.assigned_staff || task.assigned_to || 'unassigned'}</span>}
+              {(task.priority === 'P0' || task.priority === 'CRITICAL' || task.priority === 'Critical') ? (
+                <span className="px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded text-[10px] uppercase font-bold">🚨 {task.priority}</span>
+              ) : (
+                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-[10px] uppercase font-bold">Priority: {task.priority || 'P3'}</span>
+              )}
+              {(task.sla_target_resolution_mins || task.sla_deadline) && (
+                <span className="px-2 py-0.5 bg-sky-500/15 text-sky-300 rounded text-[10px] font-bold">
+                  SLA: {task.sla_target_resolution_mins ? `${task.sla_target_resolution_mins} min` : new Date(task.sla_deadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+            <div className="text-slate-100 text-lg font-medium">{task.request_text || task.title}</div>
+            <div className="text-xs text-slate-500 mt-1">
+              Source: {task.type === 'GuestRequest' ? `Guest request · ${task.guest_name || ''}` : `Operational ticket · ${task.source || 'system'}`}
+            </div>
+            {task.equipment_needed?.length > 0 && (
+              <div className="text-xs text-slate-500 mt-1"><strong>Required:</strong> {task.equipment_needed.join(', ')}</div>
+            )}
+          </div>
+          <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase whitespace-nowrap ${
+            ['ASSIGNED', 'assigned', 'todo', 'created', 'ROUTED'].includes(task.status) ? 'bg-amber-500/20 text-amber-400'
+            : ['ACCEPTED', 'acknowledged'].includes(task.status) ? 'bg-indigo-500/20 text-indigo-400'
+            : ['IN_PROGRESS', 'in_progress'].includes(task.status) ? 'bg-blue-500/20 text-blue-400'
+            : 'bg-slate-800 text-slate-300'
+          }`}>
+            {String(task.status).replace('_', ' ')}
+          </span>
+        </div>
+
+        {task.resolution_notes && (
+          <div className="mb-3 bg-slate-950 border border-slate-800 p-3 rounded-lg">
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Manager Instructions</div>
+            <div className="text-sm text-amber-100">{task.resolution_notes}</div>
+          </div>
+        )}
+
+        {/* State machine actions — only for own tasks (or supervisors overseeing) */}
+        {myTask && OPEN.includes(task.status) && (
+          <div className="mt-4 pt-4 border-t border-slate-800 space-y-3">
+            {['ASSIGNED', 'assigned', 'todo', 'created', 'ROUTED'].includes(task.status) && (
+              <>
+                <button disabled={loading !== null} onClick={() => act(task.id, 'accept', {})}
+                  className="w-full px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition disabled:opacity-50">
+                  Accept Task
+                </button>
+                <div className="flex gap-3 items-center">
+                  <select value={rejectionNotes[task.id] || ''} onChange={e => setRejectionNotes({ ...rejectionNotes, [task.id]: e.target.value })}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-rose-500">
+                    <option value="" disabled>Select rejection reason (required)…</option>
+                    <option value="unavailable">Unavailable</option>
+                    <option value="wrong skill">Wrong skill</option>
+                    <option value="equipment unavailable">Equipment unavailable</option>
+                    <option value="shift ended">Shift ended</option>
+                    <option value="unsafe">Unsafe</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <button disabled={loading !== null || !rejectionNotes[task.id]} onClick={() => act(task.id, 'reject', { reason: rejectionNotes[task.id] })}
+                    className="px-6 py-2 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-lg transition disabled:opacity-50">
+                    Reject
+                  </button>
+                </div>
+              </>
+            )}
+
+            {['ACCEPTED', 'acknowledged'].includes(task.status) && (
+              <button disabled={loading !== null} onClick={() => act(task.id, 'start', {})}
+                className="w-full px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50">
+                Start Work (En Route)
+              </button>
+            )}
+
+            {['IN_PROGRESS', 'in_progress'].includes(task.status) && (
+              <>
+                <div className="flex gap-3">
+                  <input type="text" placeholder="Completion note (required)…" value={completionNotes[task.id] || ''}
+                    onChange={e => setCompletionNotes({ ...completionNotes, [task.id]: e.target.value })}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500" />
+                  <button disabled={loading !== null || !(completionNotes[task.id] || '').trim()}
+                    onClick={() => act(task.id, 'complete', { completion_note: completionNotes[task.id] })}
+                    className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition disabled:opacity-50">
+                    Complete ✓
+                  </button>
+                </div>
+                <div className="flex gap-3 items-center pt-2 border-t border-slate-800/50">
+                  <select value={blockNotes[task.id] || ''} onChange={e => setBlockNotes({ ...blockNotes, [task.id]: e.target.value })}
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+                    <option value="" disabled>Escalate / block reason…</option>
+                    <option value="Equipment unavailable">Equipment unavailable</option>
+                    <option value="Parts unavailable">Parts unavailable</option>
+                    <option value="Guest unavailable">Guest unavailable</option>
+                    <option value="Unsafe condition">Unsafe condition</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <button disabled={loading !== null || !blockNotes[task.id]} onClick={() => act(task.id, 'block', { reason: blockNotes[task.id] })}
+                    className="px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition disabled:opacity-50">
+                    Escalate
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Phase 9 — on-site observation (available on any active task you can see) */}
+        {OPEN.includes(task.status) && (
+          <div className="mt-3 pt-3 border-t border-slate-800/60">
+            {!openObs[task.id] ? (
+              <button onClick={() => setOpenObs({ ...openObs, [task.id]: true })}
+                className="text-xs font-bold text-teal-400 hover:text-teal-300 uppercase tracking-wider transition">
+                + Log on-site observation
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <textarea rows={2} value={observations[task.id] || ''} onChange={e => setObservations({ ...observations, [task.id]: e.target.value })}
+                  placeholder='Noticed something else? e.g. "AC leaking + sink blocked in this room" — the right department gets a ticket automatically.'
+                  className="w-full bg-slate-950 border border-teal-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-teal-500" />
+                <div className="flex gap-2">
+                  <button disabled={loading !== null || (observations[task.id] || '').trim().length < 3} onClick={() => submitObservation(task)}
+                    className="px-4 py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-lg transition disabled:opacity-50">
+                    {loading === task.id + 'obs' ? 'Sending…' : 'Send to Manager'}
+                  </button>
+                  <button onClick={() => setOpenObs({ ...openObs, [task.id]: false })} className="px-4 py-1.5 bg-slate-800 text-slate-300 text-xs font-bold rounded-lg">Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">My Tasks</h1>
-          <div className="flex items-center space-x-3">
-            <span className="text-slate-400 text-sm">Frontline Worker Interface</span>
+          <h1 className="text-3xl font-bold text-white mb-1">My Tasks</h1>
+          <div className="text-slate-400 text-sm">
+            {staffName ? <span className="text-white font-bold">{staffName}</span> : 'Frontline worker'}
+            {ownDepartment && <span className="capitalize"> · {ownDepartment}</span>}
+            <span className="text-slate-500"> · live queue</span>
           </div>
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-2">
-          <select 
-            value={currentStaff}
-            onChange={(e) => setCurrentStaff(e.target.value)}
-            className="bg-transparent text-slate-200 text-sm focus:outline-none pr-4"
-          >
-            {staffOptions.map(staff => (
-              <option key={staff} value={staff} className="bg-slate-900">{staff}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="space-y-6 mb-12">
-        <h2 className="text-xl font-semibold text-white">Active Dispatch Queue</h2>
-        {activeTasks.length === 0 ? (
-          <div className="bg-slate-900 border border-slate-800 border-dashed rounded-xl p-12 text-center text-slate-500">
-            No active tasks. You are fully caught up!
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {activeTasks.map(task => (
-              <div key={task.id} className="bg-slate-900 border border-slate-700 rounded-xl p-5 shadow-lg border-l-4 border-l-indigo-500">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="flex items-center space-x-3 mb-2">
-                      <span className="px-2.5 py-1 bg-slate-800 text-slate-300 rounded-md text-[11px] font-bold">
-                        {task.id}
-                      </span>
-                      <span className="text-slate-400 text-sm">Room {task.room_number || 'N/A'}</span>
-                      {task.priority === 'P0' || task.priority === 'CRITICAL' ? (
-                        <span className="px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded text-[10px] uppercase font-bold">🚨 {task.priority} Emergency</span>
-                      ) : (
-                        <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-[10px] uppercase font-bold">Priority: {task.priority || 'P3'}</span>
-                      )}
-                    </div>
-                    <div className="text-slate-100 text-lg font-medium">
-                      {task.request_text || task.title}
-                    </div>
-                    {task.equipment_needed && task.equipment_needed.length > 0 && (
-                      <div className="text-xs text-slate-500 mt-2">
-                        <strong>Required Equipment:</strong> {task.equipment_needed.join(', ')}
-                      </div>
-                    )}
-                  </div>
-                  <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase ${
-                    task.status === 'ASSIGNED' ? 'bg-amber-500/20 text-amber-400' :
-                    task.status === 'ACCEPTED' ? 'bg-indigo-500/20 text-indigo-400' :
-                    task.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-400' :
-                    'bg-slate-800 text-slate-300'
-                  }`}>
-                    {task.status.replace('_', ' ')}
-                  </span>
-                </div>
-
-                {task.resolution_notes && task.status !== 'COMPLETED' && (
-                  <div className="mb-4 mt-2 bg-slate-950 border border-slate-800 p-3 rounded-lg">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Manager Instructions</div>
-                    <div className="text-sm text-amber-100">{task.resolution_notes}</div>
-                  </div>
-                )}
-
-                {/* State Machine Actions */}
-                <div className="mt-4 pt-4 border-t border-slate-800">
-                  
-                  {task.status === 'ASSIGNED' && (
-                    <div className="space-y-3">
-                      <div className="flex space-x-3">
-                        <button
-                          disabled={loading}
-                          onClick={() => handleAction(task.id, 'accept')}
-                          className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg shadow-lg shadow-emerald-600/20 transition flex-1"
-                        >
-                          Accept Task
-                        </button>
-                      </div>
-                      <div className="flex space-x-3 items-center">
-                        <select 
-                          value={rejectionNotes[task.id] || ''} 
-                          onChange={e => setRejectionNotes({...rejectionNotes, [task.id]: e.target.value})}
-                          className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-rose-500"
-                        >
-                          <option value="" disabled>Select rejection reason...</option>
-                          <option value="unavailable">Unavailable</option>
-                          <option value="wrong skill">Wrong skill</option>
-                          <option value="equipment unavailable">Equipment unavailable</option>
-                          <option value="shift ended">Shift ended</option>
-                          <option value="unsafe">Unsafe</option>
-                          <option value="other">Other</option>
-                        </select>
-                        <button
-                          disabled={loading || !rejectionNotes[task.id]}
-                          onClick={() => handleAction(task.id, 'reject')}
-                          className="px-6 py-2 bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-lg shadow-lg shadow-rose-600/20 transition disabled:opacity-50"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {task.status === 'ACCEPTED' && (
-                    <button
-                      disabled={loading}
-                      onClick={() => handleAction(task.id, 'start')}
-                      className="w-full px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-lg shadow-blue-600/20 transition"
-                    >
-                      Start Work (En Route)
-                    </button>
-                  )}
-
-                  {task.status === 'IN_PROGRESS' && (
-                    <div className="space-y-3">
-                      <div className="flex space-x-3">
-                        <input
-                          type="text"
-                          placeholder="Add completion notes..."
-                          value={completionNotes[task.id] || ''}
-                          onChange={(e) => setCompletionNotes({...completionNotes, [task.id]: e.target.value})}
-                          className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-                        />
-                        <button
-                          disabled={loading}
-                          onClick={() => handleAction(task.id, 'complete')}
-                          className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-lg shadow-indigo-600/20 transition disabled:opacity-50"
-                        >
-                          Mark Completed ✓
-                        </button>
-                      </div>
-                      <div className="flex space-x-3 items-center pt-2 border-t border-slate-800/50">
-                        <select 
-                          value={blockNotes[task.id] || ''} 
-                          onChange={e => setBlockNotes({...blockNotes, [task.id]: e.target.value})}
-                          className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500"
-                        >
-                          <option value="" disabled>Select block reason...</option>
-                          <option value="Equipment unavailable">Equipment unavailable</option>
-                          <option value="Parts unavailable">Parts unavailable</option>
-                          <option value="Guest unavailable">Guest unavailable</option>
-                          <option value="Unsafe condition">Unsafe condition</option>
-                          <option value="Other">Other</option>
-                        </select>
-                        <button
-                          disabled={loading || !blockNotes[task.id]}
-                          onClick={() => handleAction(task.id, 'block')}
-                          className="px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg shadow-lg shadow-amber-600/20 transition disabled:opacity-50"
-                        >
-                          Mark Blocked
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Fallback for OperationalTickets or older statuses */}
-                  {!['ASSIGNED', 'ACCEPTED', 'IN_PROGRESS'].includes(task.status) && task.type !== 'GuestRequest' && (
-                    <button
-                      disabled={loading}
-                      onClick={() => handleAction(task.id, 'complete')}
-                      className="w-full px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-lg transition disabled:opacity-50"
-                    >
-                      Complete Ticket
-                    </button>
-                  )}
-
-                </div>
-              </div>
-            ))}
+        {!isWorker && staffOptions.length > 0 && (
+          <div className="bg-slate-900 border border-slate-800 rounded-lg p-2">
+            <select value={viewAs} onChange={e => setViewAs(e.target.value)} className="bg-transparent text-slate-200 text-sm focus:outline-none pr-2">
+              <option value="me" className="bg-slate-900">Myself ({currentUser?.name})</option>
+              {staffOptions.map(s => <option key={s} value={s} className="bg-slate-900">{s}</option>)}
+            </select>
           </div>
         )}
       </div>
 
+      {toast && <div className="mb-4 bg-slate-900 border border-indigo-500/40 text-indigo-200 text-sm rounded-xl px-4 py-3">{toast}</div>}
+      {error && <div className="mb-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm rounded-xl px-4 py-3">{error}</div>}
+
+      {/* Latest dispatch notifications */}
+      {notifications.length > 0 && (
+        <div className="mb-6 bg-slate-900/70 border border-slate-800 rounded-xl p-4">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Latest dispatches</div>
+          <div className="space-y-1.5">
+            {notifications.map((n: any) => (
+              <div key={n._id} className="flex items-start gap-2 text-xs">
+                <span className={`mt-0.5 w-1.5 h-1.5 rounded-full shrink-0 ${n.priority === 'CRITICAL' ? 'bg-rose-500' : n.priority === 'HIGH' ? 'bg-amber-500' : 'bg-indigo-500'}`}></span>
+                <span className="text-slate-300"><span className="font-bold text-white">{n.title}</span> — {n.message.slice(0, 90)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-4 mb-10">
+        <h2 className="text-xl font-semibold text-white">Active Dispatch Queue</h2>
+        {activeTasks.length === 0 ? (
+          <div className="bg-slate-900 border border-slate-800 border-dashed rounded-xl p-12 text-center text-slate-500">
+            No active tasks assigned to you. New dispatches appear here automatically.
+          </div>
+        ) : activeTasks.map(t => taskCard(t))}
+      </div>
+
+      {queue.length > 0 && (
+        <div className="space-y-4 mb-10">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-300 capitalize">{ownDepartment} Department Queue</h2>
+            <p className="text-xs text-slate-500 mt-1">Tasks assigned to colleagues in your department — visible so queues never strand a guest request.</p>
+          </div>
+          {queue.map(t => taskCard(t, true))}
+        </div>
+      )}
+
       <div>
-        <h2 className="text-xl font-semibold text-slate-400 mb-6">Completed Tasks Audit Log</h2>
+        <h2 className="text-xl font-semibold text-slate-400 mb-6">Completed — Audit Trail</h2>
         <div className="space-y-3">
+          {completedTasks.length === 0 && <div className="text-slate-600 text-sm italic">Nothing completed yet today.</div>}
           {completedTasks.map(task => (
             <div key={task.id} className="bg-slate-900/50 border border-slate-800/50 rounded-lg p-4 flex justify-between items-center opacity-70">
               <div>
                 <div className="text-slate-300 line-through text-sm">{task.request_text || task.title}</div>
-                <div className="text-xs text-emerald-500/80 mt-1">✓ {task.completion_note || 'Completed'}</div>
+                <div className="text-xs text-emerald-500/80 mt-1">✓ {task.completion_note || task.resolution_notes || 'Completed'}</div>
               </div>
-              <div className="text-xs text-slate-500">
-                {new Date(task.completed_at || task.updatedAt).toLocaleString()}
-              </div>
+              <div className="text-xs text-slate-500">{new Date(task.completed_at || task.updatedAt).toLocaleString()}</div>
             </div>
           ))}
         </div>

@@ -25,6 +25,15 @@ export interface IGuestRequest extends Document {
   resolution_notes?: string;
   compensation_offered?: string;
   guest_user_id?: mongoose.Types.ObjectId;
+  // Manager decision trail (never overwritten — history lives in AuditLog;
+  // this is the CURRENT effective decision).
+  manager_decision?: {
+    decision: 'APPROVE' | 'DECLINE' | 'MODIFY';
+    by: string;
+    at: Date;
+    reason?: string;
+  };
+  original_request_text?: string; // preserved when a manager modifies instructions
 }
 
 const GuestRequestSchema = new Schema<IGuestRequest>({
@@ -37,7 +46,7 @@ const GuestRequestSchema = new Schema<IGuestRequest>({
   autonomy_level: { type: String, enum: ['AUTO', 'SUPERVISOR', 'MANAGER', 'CRITICAL'], default: 'AUTO' },
   department: { type: String, required: true },
   assigned_staff: { type: String },
-  status: { type: String, enum: ['CREATED', 'CLASSIFIED', 'ROUTED', 'ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'VERIFICATION_PENDING', 'VERIFIED', 'CANCELLED', 'REJECTED', 'ESCALATED', 'WAITING_FOR_PART', 'received', 'feedback_received'], default: 'CREATED' },
+  status: { type: String, enum: ['CREATED', 'CLASSIFIED', 'ROUTED', 'ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'VERIFICATION_PENDING', 'VERIFIED', 'CANCELLED', 'REJECTED', 'ESCALATED', 'WAITING_FOR_PART', 'PENDING_APPROVAL', 'APPROVED', 'DECLINED', 'received', 'feedback_received'], default: 'CREATED' },
   completion_note: { type: String },
   guest_feedback: { type: String },
   guest_rating: { type: Number, min: 1, max: 5 },
@@ -51,7 +60,15 @@ const GuestRequestSchema = new Schema<IGuestRequest>({
   is_emergency: { type: Boolean, default: false },
   resolution_notes: { type: String },
   compensation_offered: { type: String },
-  guest_user_id: { type: Schema.Types.ObjectId, ref: 'User', index: true }
+  guest_user_id: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+  manager_decision: {
+    _id: false,
+    decision: { type: String, enum: ['APPROVE', 'DECLINE', 'MODIFY'] },
+    by: { type: String },
+    at: { type: Date },
+    reason: { type: String }
+  },
+  original_request_text: { type: String }
 }, { timestamps: true });
 
 GuestRequestSchema.pre('save', async function(this: any) {
