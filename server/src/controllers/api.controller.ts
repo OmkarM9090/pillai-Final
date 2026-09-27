@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { GuestRequest } from '../models/GuestRequest';
 import { ActionCard } from '../models/ActionCard';
 import { StaffRoster } from '../models/StaffRoster';
@@ -59,7 +59,7 @@ export const simulate = async (req: Request, res: Response) => {
 export const getSafeEnvelope = async (req: Request, res: Response) => {
   try {
     const snapshot = await getDigitalTwinSnapshot();
-    const currentOccupancy = Math.round((snapshot.rooms.occupied / snapshot.rooms.total) * 100);
+    const currentOccupancy = snapshot.rooms.total > 0 ? Math.round((snapshot.rooms.occupied / snapshot.rooms.total) * 100) : 0;
 
     const baseSim = await runSimulation({
       occupancy_pct: currentOccupancy,
@@ -77,14 +77,12 @@ export const getSafeEnvelope = async (req: Request, res: Response) => {
         projected_demand_pct: currentOccupancy,
         bottleneck_department: baseSim.primaryBottleneck.name,
         limiting_factor: `Capacity limit reached for ${baseSim.primaryBottleneck.name} (${baseSim.primaryBottleneck.pressure}%)`,
-        constraints: baseSim.pressures.map(p => ({
-          name: p.name,
-          description: p.gap > 0 ? `Gap of ${p.gap} units` : 'Stable',
-          severity: p.pressure > 100 ? 100 : p.pressure,
-          impact: p.pressure > 90 ? 'High' : p.pressure > 70 ? 'Medium' : 'Low',
-          mitigation: p.gap > 0 ? `Requires ${p.gap} additional units` : 'None required'
+        constraints: baseSim.pressures.map((p: any) => ({
+          department: p.name,
+          ceiling: p.pressure > 100 ? 100 : p.pressure,
+          limit_factor: p.gap > 0 ? `Capacity Gap of ${p.gap} units` : 'Stable'
         })),
-        mitigationPlans: baseSim.strategies.map(s => ({
+        unlock_actions: baseSim.strategies.map((s: any) => ({
           action: s.name,
           capacity_gain: s.impact
         }))

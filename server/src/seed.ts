@@ -18,33 +18,70 @@ async function seed() {
     if (existing) {
       console.log(`⚠️  Admin user already exists: ${adminEmail}`);
       console.log('   To reset, manually delete the user from MongoDB.');
-      await disconnectDatabase();
-      process.exit(0);
+      // await disconnectDatabase();
+      // process.exit(0);
     }
 
-    // Create SUPER_ADMIN
-    // NOTE: Pass plain password as passwordHash — the pre-save hook will hash it.
-    const admin = await User.create({
-      name: adminName,
-      email: adminEmail,
-      passwordHash: adminPassword,
-      role: ROLES.SUPER_ADMIN,
-      department: 'Management',
-      isActive: true,
-    });
+    if (!existing) {
+      // Create SUPER_ADMIN
+      // NOTE: Pass plain password as passwordHash — the pre-save hook will hash it.
+      const admin = await User.create({
+        name: adminName,
+        email: adminEmail,
+        passwordHash: adminPassword,
+        role: ROLES.SUPER_ADMIN,
+        department: 'Management',
+        isActive: true,
+      });
 
-    console.log('✅ Seed completed successfully!');
-    console.log('');
-    console.log('👤 Admin account created:');
-    console.log(`   Name:  ${admin.name}`);
-    console.log(`   Email: ${admin.email}`);
-    console.log(`   Role:  ${admin.role}`);
-    console.log('');
-    console.log('🔑 Login credentials:');
-    console.log(`   Email:    ${adminEmail}`);
-    console.log(`   Password: ${adminPassword}`);
-    console.log('');
-    console.log('⚠️  Change the admin password after first login!');
+      console.log('✅ Seed completed successfully!');
+      console.log('');
+      console.log('👤 Admin account created:');
+      console.log(`   Name:  ${admin.name}`);
+      console.log(`   Email: ${admin.email}`);
+      console.log(`   Role:  ${admin.role}`);
+      console.log('');
+      console.log('🔑 Login credentials:');
+      console.log(`   Email:    ${adminEmail}`);
+      console.log(`   Password: ${adminPassword}`);
+      console.log('');
+      console.log('⚠️  Change the admin password after first login!');
+    }
+
+    // Create Demo Users
+    const demoUsers = [
+      {
+        name: 'Demo Manager',
+        email: 'manager@smartresort.demo',
+        passwordHash: 'demo123',
+        role: ROLES.MANAGER || 'MANAGER',
+        department: 'Management',
+        isActive: true,
+      },
+      {
+        name: 'Demo Housekeeper',
+        email: 'housekeeper@smartresort.demo',
+        passwordHash: 'demo123',
+        role: ROLES.WORKER || 'WORKER',
+        department: 'Housekeeping',
+        isActive: true,
+      },
+      {
+        name: 'Demo Guest',
+        email: 'guest@smartresort.demo',
+        passwordHash: 'demo123',
+        role: ROLES.GUEST || 'GUEST',
+        department: 'Guest Relations',
+        isActive: true,
+      }
+    ];
+
+    for (const u of demoUsers) {
+      if (!(await User.findOne({ email: u.email }))) {
+        await User.create(u);
+      }
+    }
+    console.log('👤 Demo accounts created for: manager, housekeeper, guest.');
 
     await disconnectDatabase();
     process.exit(0);

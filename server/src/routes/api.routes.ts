@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import MLService from '../services/mlClient';
 import {
   getDashboard,
   simulate,
@@ -94,5 +95,111 @@ router.patch('/worker-tasks/:taskId/complete', authenticate, authorize(ROLES.WOR
 // PUBLIC / DEMO / DEV ROUTES
 // ==========================================
 router.post('/reset-demo', authenticate, authorize(ROLES.MANAGER, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), resetDemo);
+
+// ==========================================
+// ML ENGINE ROUTES (FastAPI Integration)
+// ==========================================
+router.post('/forecast/predict', async (req, res) => {
+  try {
+    const result = await MLService.predictDemand(req.body);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/forecast/weekly', async (req, res) => {
+  try {
+    const result = await MLService.getWeeklyForecast();
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/simulation/run', async (req, res) => {
+  try {
+    const result = await MLService.runSimulation(req.body);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/simulation/compare', async (req, res) => {
+  try {
+    const { scenario_a, scenario_b } = req.body;
+    const result = await MLService.compareScenarios(scenario_a, scenario_b);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/simulation/presets', async (req, res) => {
+  try {
+    const result = await MLService.getSimulationPresets();
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/nlp/analyze-review', async (req, res) => {
+  try {
+    const result = await MLService.analyzeReview(req.body);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/nlp/analyze-bulk', async (req, res) => {
+  try {
+    const result = await MLService.analyzeBulkReviews(req.body.reviews);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/nlp/sample-reviews', async (req, res) => {
+  try {
+    const result = await MLService.getSampleReviews();
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/staff/generate-roster', async (req, res) => {
+  try {
+    const result = await MLService.generateRoster(req.body);
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/staff/dashboard', async (req, res) => {
+  try {
+    const result = await MLService.getStaffDashboard();
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get('/ml/health', async (req, res) => {
+  try {
+    const result = await MLService.checkHealth();
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    res.json({ 
+      success: false, 
+      data: { status: 'ML server offline', error: error.message }
+    });
+  }
+});
 
 export default router;

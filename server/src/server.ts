@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { validateEnv } from './config/env';
 import { connectDatabase, disconnectDatabase } from './config/database';
-import { createApp } from './app';
+import app from './app';
 
 // Validate environment variables before anything else
 validateEnv();
@@ -13,8 +13,7 @@ async function bootstrap() {
     // Connect to database
     await connectDatabase();
 
-    // Create Express application
-    const app = createApp();
+
 
     // Start HTTP server
     const server = app.listen(PORT, () => {
