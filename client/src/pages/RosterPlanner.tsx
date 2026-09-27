@@ -46,10 +46,10 @@ export function RosterPlanner() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <div>
         <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">AI STAFF ROSTER SCHEDULER</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] text-[var(--text-primary)] tracking-tight">AI STAFF ROSTER SCHEDULER</h1>
           <span className="px-2 py-0.5 bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-bold rounded">
             GASA ALGORITHM
           </span>
@@ -60,7 +60,7 @@ export function RosterPlanner() {
       </div>
 
       {/* Controls */}
-      <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5">
+      <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div>
             <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Roster Date</label>
@@ -109,29 +109,29 @@ export function RosterPlanner() {
         <>
           {/* Summary strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 text-center">
+            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-4 text-center">
               <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase">Staff Assigned</div>
-              <div className="text-2xl font-black text-[var(--text-primary)] mt-1">{roster.summary.total_assigned}</div>
+              <div className="text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] text-[var(--text-primary)] mt-1">{roster.summary.total_assigned}</div>
             </div>
-            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 text-center">
+            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-4 text-center">
               <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase">Coverage Score</div>
-              <div className={`text-2xl font-black mt-1 ${roster.summary.coverage_score >= 90 ? 'text-emerald-400' : roster.summary.coverage_score >= 70 ? 'text-amber-400' : 'text-rose-400'}`}>
+              <div className={`text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] mt-1 ${roster.summary.coverage_score >= 90 ? 'text-emerald-400' : roster.summary.coverage_score >= 70 ? 'text-amber-400' : 'text-rose-400'}`}>
                 {roster.summary.coverage_score}%
               </div>
             </div>
-            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 text-center">
+            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-4 text-center">
               <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase">Est. Labor Cost</div>
-              <div className="text-2xl font-black text-[var(--accent)] mt-1">₹{roster.summary.estimated_cost.toLocaleString()}</div>
+              <div className="text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] text-[var(--accent)] mt-1">₹{roster.summary.estimated_cost.toLocaleString()}</div>
             </div>
-            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 text-center">
+            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-4 text-center">
               <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase">Coverage Gaps</div>
-              <div className={`text-2xl font-black mt-1 ${roster.alerts.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{roster.alerts.length}</div>
+              <div className={`text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] mt-1 ${roster.alerts.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{roster.alerts.length}</div>
             </div>
           </div>
 
           {/* Alerts */}
           {roster.alerts.length > 0 && (
-            <div className="bg-rose-950/30 border border-rose-500/30 rounded-[1rem] p-4 space-y-2">
+            <div className="bg-rose-950/30 border border-rose-500/30 rounded-xl p-4 space-y-2">
               <div className="text-xs font-bold text-rose-300 uppercase tracking-wider mb-2">⚠️ Understaffed Shifts</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {roster.alerts.map((a: any, i: number) => (
@@ -147,7 +147,7 @@ export function RosterPlanner() {
           )}
 
           {/* Roster grid */}
-          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5">
+          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-5">
             <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Shift Assignment Board — {roster.date}</h2>
             <div className="space-y-6">
               {Object.entries(roster.roster).map(([dept, shifts]: [string, any]) => (
@@ -183,7 +183,7 @@ export function RosterPlanner() {
       )}
 
       {!roster && !loading && !error && (
-        <div className="text-center p-12 bg-[var(--bg-card)]/50 border border-[var(--card-border)] border-dashed rounded-[1rem] text-[var(--text-muted)] text-sm">
+        <div className="text-center p-12 bg-[var(--bg-card)]/50 border border-[var(--card-border)] border-dashed rounded-xl text-[var(--text-muted)] text-sm">
           Set your parameters above and click "Generate Optimal Roster" to run the GASA scheduling engine.
         </div>
       )}

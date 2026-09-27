@@ -153,17 +153,17 @@ export function TimeMachine() {
   if (isError) {
     return (
       <div className="p-8 text-center">
-        <h2 className="text-2xl text-rose-500 font-bold mb-4">Simulation Engine Unavailable</h2>
+        <h2 className="text-2xl text-[var(--color-resort-error)] font-bold mb-4">Simulation Engine Unavailable</h2>
         <button onClick={runSimulation} className="bg-[var(--bg-secondary)] px-4 py-2 rounded text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]">Retry</button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-[clamp(1.8rem,4vw,2.5rem)] font-[800] font-display tracking-tight tracking-tight text-[var(--text-primary)]">Digital Twin <span className="text-indigo-500">Time Machine</span></h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold font-display tracking-tight tracking-tight text-[var(--text-primary)]">Digital Twin <span className="text-indigo-500">Time Machine</span></h1>
           <p className="text-[var(--text-secondary)] mt-1">Predict operational consequences of what-if scenarios</p>
         </div>
         <button 
@@ -176,7 +176,7 @@ export function TimeMachine() {
       </div>
 
       {/* REAL TRAINED ML: 7-DAY OCCUPANCY FORECAST */}
-      <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-6 shadow-[var(--card-shadow)] mb-6">
+      <div className="card mb-6">
         <div className="flex items-center justify-between mb-5 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">0. AI Occupancy Demand Forecast</h2>
@@ -227,13 +227,13 @@ export function TimeMachine() {
           { label: 'Est. GOPPAR', base: `$${baseline.decisionSummary?.goppar_estimate ?? 0}`, scen: `$${results.decisionSummary?.goppar_estimate ?? 0}`, delta: `${(results.decisionSummary?.goppar_estimate ?? 0) - (baseline.decisionSummary?.goppar_estimate ?? 0) >= 0 ? '+' : '-'}$${Math.abs(Math.round((results.decisionSummary?.goppar_estimate ?? 0) - (baseline.decisionSummary?.goppar_estimate ?? 0)))}`, bad: (results.decisionSummary?.goppar_estimate ?? 0) < (baseline.decisionSummary?.goppar_estimate ?? 0) },
         ];
         return (
-          <div className="bg-[var(--bg-card)] border border-[var(--accent)]/30 rounded-[1.5rem] p-6 shadow-[var(--card-shadow)] mb-6">
+          <div className="card !border-[var(--accent)]/30 mb-6">
             <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">What-If Impact — Baseline vs Scenario</h2>
               <span className="text-[11px] text-[var(--text-muted)]">Baseline = live digital twin at {baseline.occupancy_pct}% occupancy · computed, not hardcoded</span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-left text-sm border-collapse">
                 <thead>
                   <tr className="border-b border-[var(--card-border)] text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
                     <th className="pb-2 font-bold">Metric</th>
@@ -262,7 +262,7 @@ export function TimeMachine() {
 
         {/* LEFT COLUMN - CONTROLS & SUMMARY */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-6 shadow-[var(--card-shadow)]">
+          <div className="card">
             <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-6">1. Scenario Inputs</h2>
             
             <div className="space-y-6">
@@ -348,21 +348,21 @@ export function TimeMachine() {
           </div>
 
           {results && (
-            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-6 shadow-[var(--card-shadow)]">
+            <div className="card">
               <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4">11. AI Decision Summary</h2>
               <div className="space-y-4">
-                <div className="bg-[var(--accent-soft)] p-4 rounded-[1rem] border border-[var(--border-color)]/50">
+                <div className="bg-[var(--accent-soft)] p-4 rounded-xl border border-[var(--border-color)]/50">
                   <div className="text-xs text-[var(--text-secondary)] mb-1">Chief Agent Assessment</div>
                   <div className="text-sm font-semibold text-[var(--text-primary)]">{results.council?.chief_synthesis || results.decisionSummary.assessment}</div>
                 </div>
                 
-                <div className="bg-rose-500/10 p-4 rounded-[1rem] border border-rose-500/20">
+                <div className="bg-rose-500/10 p-4 rounded-xl border border-rose-500/20">
                   <div className="text-xs text-rose-400 font-bold mb-1">Primary Bottleneck</div>
                   <div className="text-lg font-black text-[var(--text-primary)]">{results.decisionSummary.bottleneck}</div>
                   <div className="text-xs text-[var(--text-secondary)] mt-2">{results.decisionSummary.staffingImpact}</div>
                 </div>
 
-                <div className="bg-emerald-500/10 p-4 rounded-[1rem] border border-emerald-500/20">
+                <div className="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
                   <div className="text-xs text-emerald-400 font-bold mb-1">Est. GOPPAR</div>
                   <div className="text-lg font-black text-emerald-300">${results.decisionSummary.goppar_estimate}</div>
                 </div>
@@ -376,8 +376,8 @@ export function TimeMachine() {
                           <div className="flex justify-between items-center mb-1">
                             <span className="text-xs font-bold text-[var(--text-primary)]">{agent.name} Agent</span>
                             <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded ${
-                              agent.status === 'critical' ? 'bg-rose-500/20 text-rose-400' : 
-                              agent.status === 'warning' ? 'bg-amber-500/20 text-amber-400' : 'bg-emerald-500/20 text-emerald-400'
+                              agent.status === 'critical' ? 'badge badge-error' : 
+                              agent.status === 'warning' ? 'badge badge-warning' : 'badge badge-success'
                             }`}>
                               {agent.status}
                             </span>
@@ -396,7 +396,7 @@ export function TimeMachine() {
         {/* RIGHT COLUMN - RESULTS */}
         <div className="lg:col-span-3 space-y-6">
           {!results && loading && (
-            <div className="h-96 flex items-center justify-center bg-[var(--bg-card)]/50 rounded-[1.5rem] border border-[var(--card-border)]">
+            <div className="h-96 flex items-center justify-center bg-[var(--bg-card)]/50 rounded-2xl border border-[var(--card-border)]">
               <div className="text-indigo-500 font-bold animate-pulse">Running Digital Twin Simulation...</div>
             </div>
           )}
@@ -405,7 +405,7 @@ export function TimeMachine() {
             <>
               {/* SNAPSHOT & SAFE CAPACITY */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-6 shadow-[var(--card-shadow)] relative overflow-hidden">
+                <div className="card relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
                   <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4 relative z-10">2. Current State Snapshot</h2>
                   <div className="grid grid-cols-2 gap-4 relative z-10">
@@ -428,7 +428,7 @@ export function TimeMachine() {
                   </div>
                 </div>
 
-                <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-6 shadow-[var(--card-shadow)] relative overflow-hidden flex flex-col justify-center items-center text-center">
+                <div className="card relative overflow-hidden flex flex-col justify-center items-center text-center">
                   <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">12. Resort Safe Operating Capacity</h2>
                   <div className="flex items-end gap-2">
                     <span className="text-6xl font-black tracking-tighter text-[var(--text-primary)]">{results.safeCapacity}%</span>
@@ -438,7 +438,7 @@ export function TimeMachine() {
               </div>
 
               {/* DEPARTMENT PRESSURES */}
-              <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-6 shadow-[var(--card-shadow)]">
+              <div className="card">
                 <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-6">3. Capacity Analysis & Bottlenecks</h2>
                 <div className="space-y-5">
                   {results.pressures.map((p: Pressure, i: number) => {
@@ -469,10 +469,10 @@ export function TimeMachine() {
               </div>
 
               {/* INVENTORY FORECAST */}
-              <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-6 shadow-[var(--card-shadow)]">
+              <div className="card">
                 <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4">7. Inventory Forecast</h2>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full text-left text-sm border-collapse">
                     <thead>
                       <tr className="border-b border-[var(--card-border)] text-[var(--text-muted)] text-xs">
                         <th className="pb-3 font-semibold">Item</th>
@@ -490,7 +490,7 @@ export function TimeMachine() {
                           <td className="py-3 text-right text-[var(--text-secondary)] font-mono">{item.consumption.toFixed(1)}</td>
                           <td className="py-3 text-right font-mono font-bold text-[var(--text-primary)]">{item.remaining.toFixed(1)}</td>
                           <td className="py-3 text-right">
-                            <span className={`px-2 py-1 text-[10px] font-bold rounded ${item.status === 'CRITICAL' ? 'bg-rose-500/20 text-rose-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                            <span className={`px-2 py-1 text-[10px] font-bold rounded ${item.status === 'CRITICAL' ? 'badge badge-error' : 'badge badge-success'}`}>
                               {item.status}
                             </span>
                           </td>
@@ -502,7 +502,7 @@ export function TimeMachine() {
               </div>
 
               {/* STRATEGIES */}
-              <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-6 shadow-[var(--card-shadow)]">
+              <div className="card">
                 <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4">10. Operational Strategies</h2>
                 
                 {results.strategies.length === 0 ? (
@@ -510,7 +510,7 @@ export function TimeMachine() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {results.strategies.map((strat: Strategy, i: number) => (
-                      <div key={i} className="bg-[var(--accent-soft)] border border-[var(--border-color)]/50 rounded-[1rem] p-4">
+                      <div key={i} className="bg-[var(--accent-soft)] border border-[var(--border-color)]/50 rounded-xl p-4">
                         <h3 className="font-bold text-[var(--accent)] text-sm mb-2">{strat.name}</h3>
                         <div className="text-xs text-[var(--text-primary)] mb-2"><strong>Action:</strong> {strat.action}</div>
                         <div className="text-xs text-[var(--text-secondary)] mb-2"><strong>Impact:</strong> {strat.impact}</div>
@@ -524,7 +524,7 @@ export function TimeMachine() {
               </div>
 
               {/* CREATE ACTION PLAN */}
-              <div className="bg-indigo-950/30 border border-[var(--accent)]/20 rounded-[1.5rem] p-6 shadow-[var(--card-shadow)] flex items-center justify-between">
+              <div className="bg-indigo-950/30 border border-[var(--accent)]/20 rounded-2xl p-6 shadow-[var(--card-shadow)] flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-[var(--text-primary)] mb-1">19. Apply Operational Plan</h2>
                   <p className="text-sm text-indigo-200">Convert the best strategies into an ActionCard for human-in-the-loop review.</p>
@@ -533,7 +533,7 @@ export function TimeMachine() {
                 <button 
                   onClick={handleCreatePlan}
                   disabled={!!actionPlanStatus}
-                  className="bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:bg-[var(--bg-secondary)]  font-bold py-3 px-6 rounded-[1rem] shadow-[var(--card-shadow)] transition whitespace-nowrap"
+                  className="bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98] disabled:bg-[var(--bg-secondary)]  font-bold py-3 px-6 rounded-xl shadow-[var(--card-shadow)] transition whitespace-nowrap"
                 >
                   Create Action Plan
                 </button>

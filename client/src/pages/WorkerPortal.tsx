@@ -125,7 +125,7 @@ export function WorkerPortal() {
   const taskCard = (task: any, isQueue = false) => {
     const myTask = !isQueue;
     return (
-      <div key={task.id} className={`bg-[var(--bg-card)] border rounded-[1rem] p-5 shadow-[var(--card-shadow)] border-l-4 ${isQueue ? 'border-[var(--border-color)] border-l-[var(--text-muted)]' : 'border-[var(--border-color)] border-l-indigo-500'}`}>
+      <div key={task.id} className={`bg-[var(--bg-card)] border rounded-xl p-5 shadow-[var(--card-shadow)] border-l-4 ${isQueue ? 'border-[var(--border-color)] border-l-[var(--text-muted)]' : 'border-[var(--border-color)] border-l-indigo-500'}`}>
         <div className="flex justify-between items-start mb-3">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -133,9 +133,9 @@ export function WorkerPortal() {
               <span className="text-[var(--text-secondary)] text-sm">Room {task.room_number || 'N/A'}</span>
               {isQueue && <span className="px-2 py-0.5 bg-[var(--bg-secondary)] text-[var(--text-secondary)] rounded text-[10px] uppercase font-bold">Dept queue · {task.assigned_staff || task.assigned_to || 'unassigned'}</span>}
               {(task.priority === 'P0' || task.priority === 'CRITICAL' || task.priority === 'Critical') ? (
-                <span className="px-2 py-0.5 bg-rose-500/20 text-rose-400 rounded text-[10px] uppercase font-bold">🚨 {task.priority}</span>
+                <span className="px-2 py-0.5 badge badge-error rounded text-[10px] uppercase font-bold">🚨 {task.priority}</span>
               ) : (
-                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-[10px] uppercase font-bold">Priority: {task.priority || 'P3'}</span>
+                <span className="px-2 py-0.5 badge badge-warning rounded text-[10px] uppercase font-bold">Priority: {task.priority || 'P3'}</span>
               )}
               {(task.sla_target_resolution_mins || task.sla_deadline) && (
                 <span className="px-2 py-0.5 bg-sky-500/15 text-sky-300 rounded text-[10px] font-bold">
@@ -152,9 +152,9 @@ export function WorkerPortal() {
             )}
           </div>
           <span className={`px-3 py-1 rounded-md text-xs font-bold uppercase whitespace-nowrap ${
-            ['ASSIGNED', 'assigned', 'todo', 'created', 'ROUTED'].includes(task.status) ? 'bg-amber-500/20 text-amber-400'
+            ['ASSIGNED', 'assigned', 'todo', 'created', 'ROUTED'].includes(task.status) ? 'badge badge-warning'
             : ['ACCEPTED', 'acknowledged'].includes(task.status) ? 'bg-[var(--accent-soft)] text-[var(--accent)]'
-            : ['IN_PROGRESS', 'in_progress'].includes(task.status) ? 'bg-blue-500/20 text-blue-400'
+            : ['IN_PROGRESS', 'in_progress'].includes(task.status) ? 'badge badge-primary'
             : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
           }`}>
             {String(task.status).replace('_', ' ')}
@@ -284,12 +284,12 @@ export function WorkerPortal() {
         )}
       </div>
 
-      {toast && <div className="mb-4 bg-[var(--bg-card)] border border-[var(--accent)]/40 text-indigo-200 text-sm rounded-[1rem] px-4 py-3">{toast}</div>}
-      {error && <div className="mb-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm rounded-[1rem] px-4 py-3">{error}</div>}
+      {toast && <div className="mb-4 bg-[var(--bg-card)] border border-[var(--accent)]/40 text-indigo-200 text-sm rounded-xl px-4 py-3">{toast}</div>}
+      {error && <div className="mb-4 bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm rounded-xl px-4 py-3">{error}</div>}
 
       {/* Latest dispatch notifications */}
       {notifications.length > 0 && (
-        <div className="mb-6 bg-[var(--bg-card)]/70 border border-[var(--card-border)] rounded-[1rem] p-4">
+        <div className="mb-6 bg-[var(--bg-card)]/70 border border-[var(--card-border)] rounded-xl p-4">
           <div className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest mb-2">Latest dispatches</div>
           <div className="space-y-1.5">
             {notifications.map((n: any) => (
@@ -305,7 +305,7 @@ export function WorkerPortal() {
       <div className="space-y-4 mb-10">
         <h2 className="text-xl font-semibold text-[var(--text-primary)]">Active Dispatch Queue</h2>
         {activeTasks.length === 0 ? (
-          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] border-dashed rounded-[1rem] p-12 text-center text-[var(--text-muted)]">
+          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] border-dashed rounded-xl p-12 text-center text-[var(--text-muted)]">
             No active tasks assigned to you. New dispatches appear here automatically.
           </div>
         ) : activeTasks.map(t => taskCard(t))}
@@ -329,7 +329,7 @@ export function WorkerPortal() {
             <div key={task.id} className="bg-[var(--bg-card)]/50 border border-[var(--accent-soft-border)] rounded-lg p-4 flex justify-between items-center opacity-70">
               <div>
                 <div className="text-[var(--text-secondary)] line-through text-sm">{task.request_text || task.title}</div>
-                <div className="text-xs text-emerald-500/80 mt-1">✓ {task.completion_note || task.resolution_notes || 'Completed'}</div>
+                <div className="text-xs text-[var(--color-resort-success)]/80 mt-1">✓ {task.completion_note || task.resolution_notes || 'Completed'}</div>
               </div>
               <div className="text-xs text-[var(--text-muted)]">{new Date(task.completed_at || task.updatedAt).toLocaleString()}</div>
             </div>

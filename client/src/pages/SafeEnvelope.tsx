@@ -55,10 +55,10 @@ export function SafeEnvelope() {
   const gap = projected_demand_pct - safe_occupancy_pct;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <div>
         <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">SAFE OPERATING ENVELOPE</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] text-[var(--text-primary)] tracking-tight">SAFE OPERATING ENVELOPE</h1>
           <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold rounded">
             REVERSE TWIN
           </span>
@@ -69,10 +69,10 @@ export function SafeEnvelope() {
       </div>
 
       {/* Hero Alert: Gap Warning */}
-      <div className="bg-gradient-to-r from-rose-950/60 to-slate-900 border border-rose-500/40 rounded-[1rem] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-rose-950/60 to-slate-900 border border-rose-500/40 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <div className="text-xs font-bold text-rose-400 uppercase tracking-wider">CAPACITY BOTTLENECK DETECTED</div>
-          <div className="text-[clamp(1.8rem,4vw,2.5rem)] font-[800] font-display tracking-tight text-[var(--text-primary)] mt-1">
+          <div className="text-3xl md:text-4xl font-extrabold font-display tracking-tight text-[var(--text-primary)] mt-1">
             Safe Ceiling: <span className="text-emerald-400">{safe_occupancy_pct}%</span> vs Projected Demand: <span className="text-rose-400">{projected_demand_pct}%</span>
           </div>
           <div className="text-xs text-[var(--text-secondary)] mt-2">
@@ -82,7 +82,7 @@ export function SafeEnvelope() {
 
         <Link
           to="/council"
-          className="px-6 py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98]  font-bold text-xs rounded-[1rem] shadow-[var(--card-shadow)] shadow-indigo-600/30 whitespace-nowrap transition"
+          className="px-6 py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98]  font-bold text-xs rounded-xl shadow-[var(--card-shadow)] shadow-indigo-600/30 whitespace-nowrap transition"
         >
           Open AI Decision Council →
         </Link>
@@ -90,7 +90,7 @@ export function SafeEnvelope() {
 
       {/* Constraint Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5 space-y-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-5 space-y-4">
           <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Department Capacity Ceilings</h2>
 
           <div className="space-y-4">
@@ -118,7 +118,7 @@ export function SafeEnvelope() {
         </div>
 
         {/* Capacity Unlock Actions */}
-        <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5 space-y-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-5 space-y-4">
           <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Capacity Unlock Strategy</h2>
 
           <p className="text-xs text-[var(--text-secondary)]">

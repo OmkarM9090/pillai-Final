@@ -128,10 +128,10 @@ export function CouncilAndApproval() {
   const { council_agents, chief_synthesis } = council;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <div>
         <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">AI DECISION COUNCIL</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] text-[var(--text-primary)] tracking-tight">AI DECISION COUNCIL</h1>
           <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-bold rounded">
             MULTI-AGENT INTELLIGENCE
           </span>
@@ -144,7 +144,7 @@ export function CouncilAndApproval() {
       {/* 6 Specialist Agents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {council_agents?.map((agent: any) => (
-          <div key={agent.name} className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 flex flex-col justify-between">
+          <div key={agent.name} className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-4 flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center">
                 <span className="text-xs font-bold text-[var(--text-primary)]">{agent.name}</span>
@@ -163,7 +163,7 @@ export function CouncilAndApproval() {
       </div>
 
       {/* Chief Decision Agent Synthesis */}
-      <div className="bg-gradient-to-br from-indigo-950/60 to-slate-900 border border-[var(--accent)]/40 rounded-[1rem] p-6 space-y-4 shadow-[var(--card-shadow)]">
+      <div className="bg-gradient-to-br from-indigo-950/60 to-slate-900 border border-[var(--accent)]/40 rounded-xl p-6 space-y-4 shadow-[var(--card-shadow)]">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs font-bold text-[var(--accent)] uppercase tracking-wider">CHIEF DECISION AGENT SYNTHESIS</div>
@@ -195,7 +195,7 @@ export function CouncilAndApproval() {
           <button
             onClick={handleGeneratePlan}
             disabled={decisionProcessing}
-            className="w-full py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98]  font-bold text-xs rounded-[1rem] shadow-[var(--card-shadow)] transition"
+            className="w-full py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98]  font-bold text-xs rounded-xl shadow-[var(--card-shadow)] transition"
           >
             {decisionProcessing ? 'Compiling Action Card...' : 'Draft Formal Action Card for Human Approval →'}
           </button>
@@ -204,7 +204,7 @@ export function CouncilAndApproval() {
 
       {/* Human-in-the-loop Approval Queue & Audit */}
       {actionCard && (
-        <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-6 space-y-4">
+        <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-6 space-y-4">
           <div className="flex justify-between items-center border-b border-[var(--card-border)] pb-3">
             <div>
               <span className="text-xs text-[var(--accent)] font-mono font-bold">{actionCard.action_id}</span>
@@ -230,20 +230,20 @@ export function CouncilAndApproval() {
               <button
                 onClick={() => handleApprove('APPROVE')}
                 disabled={decisionProcessing}
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-[var(--text-primary)] font-bold text-xs rounded-[1rem] shadow-[var(--card-shadow)] transition"
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-[var(--text-primary)] font-bold text-xs rounded-xl shadow-[var(--card-shadow)] transition"
               >
                 ✓ APPROVE & MUTATE DIGITAL TWIN
               </button>
               <button
                 onClick={() => handleApprove('REJECT')}
                 disabled={decisionProcessing}
-                className="px-6 py-3 bg-rose-600 hover:bg-rose-500 text-[var(--text-primary)] font-bold text-xs rounded-[1rem] transition"
+                className="px-6 py-3 bg-rose-600 hover:bg-rose-500 text-[var(--text-primary)] font-bold text-xs rounded-xl transition"
               >
                 ✗ REJECT
               </button>
             </div>
           ) : actionCard.approval_status === 'rejected' ? (
-            <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-[1rem] space-y-2">
+            <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-xl space-y-2">
               <div className="text-xs font-bold text-rose-400">
                 ✗ Plan Rejected — Digital Twin unchanged.
               </div>
@@ -254,7 +254,7 @@ export function CouncilAndApproval() {
               )}
             </div>
           ) : (
-            <div className="p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-[1rem] space-y-2">
+            <div className="p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-xl space-y-2">
               <div className="text-xs font-bold text-emerald-400">
                 ✅ Plan Executed on MongoDB Digital Twin!
               </div>

@@ -23,6 +23,7 @@ export default function Navbar() {
       { name: 'Command Center', path: '/dashboard' },
       { name: 'Guest Requests', path: '/guest-requests' },
       { name: 'Time Machine', path: '/time-machine' },
+      { name: 'What-If Agent', path: '/what-if' },
       { name: 'Live Intel', path: '/world-intel' },
       { name: 'Weather Twin', path: '/weather-twin' },
       { name: 'Review & Kanban', path: '/reviews' },
@@ -83,8 +84,8 @@ export default function Navbar() {
                 key={item.path}
                 to={item.path}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${isActive
-                    ? 'bg-[var(--accent)] text-[var(--on-accent)]  shadow-md shadow-indigo-600/20'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
+                  ? 'bg-[var(--accent)] text-[var(--on-accent)]  shadow-md shadow-indigo-600/20'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
                   }`}
               >
                 {item.name}

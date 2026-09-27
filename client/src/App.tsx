@@ -7,6 +7,7 @@ import { GuestRequestsPage } from './pages/GuestRequestsPage';
 import { GuestPortal } from './pages/GuestPortal';
 import { WorkerPortal } from './pages/WorkerPortal';
 import { IncidentsAndReallocation } from './pages/IncidentsAndReallocation';
+import { WhatIfSimulatorPage } from './pages/WhatIfSimulatorPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -37,6 +38,7 @@ export default function App() {
                 <Route path="/dashboard" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><DashboardPage /></ProtectedRoute>} />
                 <Route path="/guest-requests" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><GuestRequestsPage /></ProtectedRoute>} />
                 <Route path="/time-machine" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><TimeMachine /></ProtectedRoute>} />
+                <Route path="/what-if" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><WhatIfSimulatorPage /></ProtectedRoute>} />
                 <Route path="/world-intel" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><LiveIntel /></ProtectedRoute>} />
                 <Route path="/live-intel" element={<Navigate to="/world-intel" replace />} />
                 <Route path="/weather-twin" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><WeatherTwin /></ProtectedRoute>} />

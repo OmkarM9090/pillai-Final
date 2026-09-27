@@ -142,7 +142,7 @@ export function IncidentsAndReallocation() {
       </div>
 
       {/* EMERGENCY INCIDENT ESCALATION SECTION */}
-      <div className="bg-[var(--bg-card)] border border-rose-500/30 rounded-[1.5rem] p-6 shadow-[var(--card-shadow)] space-y-6">
+      <div className="bg-[var(--bg-card)] border border-rose-500/30 rounded-2xl p-6 shadow-[var(--card-shadow)] space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[var(--card-border)] pb-4">
           <div>
             <div className="flex items-center gap-2">
@@ -159,7 +159,7 @@ export function IncidentsAndReallocation() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <form onSubmit={triggerEmergency} className="lg:col-span-5 space-y-4 bg-[var(--bg-secondary)]/60 p-4 rounded-[1rem] border border-[var(--card-border)]">
+          <form onSubmit={triggerEmergency} className="lg:col-span-5 space-y-4 bg-[var(--bg-secondary)]/60 p-4 rounded-xl border border-[var(--card-border)]">
             <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Log Emergency Incident</h3>
             <div>
               <label className="block text-[11px] font-semibold text-[var(--text-secondary)] mb-1">Incident Type</label>
@@ -207,13 +207,13 @@ export function IncidentsAndReallocation() {
           <div className="lg:col-span-7 space-y-3">
             <h3 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">Active Incident Board</h3>
             {incidentsList.length === 0 ? (
-              <div className="p-8 bg-[var(--bg-secondary)]/40 rounded-[1rem] border border-[var(--card-border)] text-center text-[var(--text-muted)] text-xs">
+              <div className="p-8 bg-[var(--bg-secondary)]/40 rounded-xl border border-[var(--card-border)] text-center text-[var(--text-muted)] text-xs">
                 No active critical incidents recorded.
               </div>
             ) : (
               <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
                 {incidentsList.map((inc: any) => (
-                  <div key={inc.incident_id} className="p-4 bg-[var(--bg-secondary)]/80 border border-[var(--card-border)] rounded-[1rem] space-y-2">
+                  <div key={inc.incident_id} className="p-4 bg-[var(--bg-secondary)]/80 border border-[var(--card-border)] rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-rose-400">{inc.incident_id}</span>
@@ -280,13 +280,13 @@ export function IncidentsAndReallocation() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Col: Clusters */}
         <div className="space-y-6">
-          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-6 shadow-[var(--card-shadow)]">
+          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-6 shadow-[var(--card-shadow)]">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-[var(--text-primary)]">Pattern Detection</h2>
               <button 
                 onClick={runClusterAnalysis}
                 disabled={loadingClusters}
-                className="px-4 py-2 bg-[var(--accent)] text-[var(--on-accent)] hover:bg-indigo-700  rounded-lg text-sm font-medium transition disabled:opacity-50"
+                className="btn-primary"
               >
                 {loadingClusters ? 'Scanning...' : 'Run Cluster Analysis'}
               </button>
@@ -326,7 +326,7 @@ export function IncidentsAndReallocation() {
                     <div className="text-[10px] text-[var(--text-secondary)] uppercase">Auto-Generated Work Order</div>
                     <div className="text-sm font-medium text-rose-300">{cluster.master_ticket.ticket_id} - Critical Dispatch</div>
                   </div>
-                  <span className="px-3 py-1 bg-rose-500/20 text-rose-400 rounded-full text-xs font-bold">L4 ESCALATION</span>
+                  <span className="px-3 py-1 badge badge-error rounded-full text-xs font-bold">L4 ESCALATION</span>
                 </div>
               </div>
             ))}
@@ -335,7 +335,7 @@ export function IncidentsAndReallocation() {
 
         {/* Right Col: Reallocation */}
         <div className="space-y-6">
-          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-6 shadow-[var(--card-shadow)]">
+          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-6 shadow-[var(--card-shadow)]">
             <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-6">Automated Room Reallocation</h2>
             
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -380,7 +380,7 @@ export function IncidentsAndReallocation() {
               <div className="border border-[var(--accent)]/30 bg-indigo-500/5 rounded-lg p-5">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-[var(--accent)] font-bold uppercase text-xs tracking-widest">Recommendation Engine</h3>
-                  <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded text-[10px] font-bold">L3 MANAGER APPROVAL</span>
+                  <span className="px-2 py-0.5 badge badge-warning rounded text-[10px] font-bold">L3 MANAGER APPROVAL</span>
                 </div>
                 
                 <div className="bg-[var(--bg-secondary)] border border-[var(--card-border)] rounded p-4 mb-4 flex items-center justify-between">
@@ -392,19 +392,19 @@ export function IncidentsAndReallocation() {
                   <div className="text-center">
                     <div className="text-[var(--text-secondary)] text-xs mb-1">Proposed (Upgrade)</div>
                     <div className="text-lg font-bold text-emerald-400">Room {reallocation.recommended_room.room_number}</div>
-                    <div className="text-[10px] text-emerald-500/70">{reallocation.recommended_room.type}</div>
+                    <div className="text-[10px] text-[var(--color-resort-success)]/70">{reallocation.recommended_room.type}</div>
                   </div>
                 </div>
 
                 <div className="space-y-2 mb-6">
                   <div className="flex items-center text-xs text-[var(--text-secondary)]">
-                    <span className="text-emerald-500 mr-2">✓</span> Room is cleaned and available
+                    <span className="text-[var(--color-resort-success)] mr-2">✓</span> Room is cleaned and available
                   </div>
                   <div className="flex items-center text-xs text-[var(--text-secondary)]">
-                    <span className="text-emerald-500 mr-2">✓</span> Zero booking collisions for next 3 days
+                    <span className="text-[var(--color-resort-success)] mr-2">✓</span> Zero booking collisions for next 3 days
                   </div>
                   <div className="flex items-center text-xs text-[var(--text-secondary)]">
-                    <span className="text-emerald-500 mr-2">✓</span> Compensatory upgrade value: +$100/night
+                    <span className="text-[var(--color-resort-success)] mr-2">✓</span> Compensatory upgrade value: +$100/night
                   </div>
                 </div>
 

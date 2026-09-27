@@ -8,7 +8,7 @@ export function UnauthorizedPage() {
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--color-resort-surface)' }}>
       <div className="text-center max-w-md px-6 animate-fade-in">
         <div
-          className="w-20 h-20 rounded-[1.5rem] flex items-center justify-center mx-auto mb-6"
+          className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6"
           style={{ background: 'rgba(220, 38, 38, 0.1)' }}
         >
           <ShieldOff className="w-10 h-10" style={{ color: 'var(--color-resort-error)' }} />

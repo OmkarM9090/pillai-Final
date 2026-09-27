@@ -82,7 +82,7 @@ export function GuestPortal() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-[clamp(1.8rem,4vw,2.5rem)] font-[800] font-display tracking-tight text-[var(--text-primary)] tracking-tight mb-2">Guest AI Concierge</h1>
+          <h1 className="text-3xl md:text-4xl font-extrabold font-display tracking-tight text-[var(--text-primary)] tracking-tight mb-2">Guest AI Concierge</h1>
           <div className="flex items-center space-x-3">
             <span className="px-3 py-1 bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/30 rounded-full text-sm font-bold">
               Room {roomNumber} - Deluxe Ocean View
@@ -96,7 +96,7 @@ export function GuestPortal() {
         
         {/* Left Col: Quick Actions & Active Requests */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-5 shadow-[var(--card-shadow)]">
+          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-2xl p-5 shadow-[var(--card-shadow)]">
             <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -111,7 +111,7 @@ export function GuestPortal() {
                   key={action.label}
                   onClick={() => handleSubmit(action.query)}
                   disabled={loading}
-                  className={`text-left px-3 py-2 border rounded-[1rem] text-xs font-semibold transition ${action.label === 'Emergency' ? 'bg-rose-950/30 border-rose-500/30 text-rose-400 hover:bg-rose-500/20' : 'bg-[var(--bg-secondary)] hover:bg-[var(--bg-secondary)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}
+                  className={`text-left px-3 py-2 border rounded-xl text-xs font-semibold transition ${action.label === 'Emergency' ? 'bg-rose-950/30 border-rose-500/30 text-rose-400 hover:bg-rose-500/20' : 'bg-[var(--bg-secondary)] hover:bg-[var(--bg-secondary)] border-[var(--border-color)] text-[var(--text-secondary)]'}`}
                 >
                   {action.label}
                 </button>
@@ -119,18 +119,18 @@ export function GuestPortal() {
             </div>
           </div>
 
-          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-5 shadow-[var(--card-shadow)] min-h-[300px]">
+          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-2xl p-5 shadow-[var(--card-shadow)] min-h-[300px]">
             <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-4">Active Requests</h2>
             <div className="space-y-4">
               {activeRequests.filter(req => req.status !== 'VERIFIED').length === 0 ? (
                 <div className="text-[var(--text-muted)] text-xs italic text-center py-10">No active requests.</div>
               ) : (
                 activeRequests.filter(req => req.status !== 'VERIFIED').map(req => (
-                  <div key={req.request_id} className="bg-[var(--accent-soft)] border border-[var(--border-color)] rounded-[1rem] p-4">
+                  <div key={req.request_id} className="bg-[var(--accent-soft)] border border-[var(--border-color)] rounded-xl p-4">
                     <div className="flex justify-between items-start mb-2">
                       <div className="font-bold text-[var(--text-primary)] text-sm capitalize">{req.intent.replace('_', ' ')}</div>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                        req.priority === 'CRITICAL' || req.priority === 'HIGH' ? 'bg-rose-500/20 text-rose-400' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
+                        req.priority === 'CRITICAL' || req.priority === 'HIGH' ? 'badge badge-error' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
                       }`}>
                         {req.priority}
                       </span>
@@ -164,7 +164,7 @@ export function GuestPortal() {
 
                     {req.status === 'COMPLETED' && (
                       <div className="mt-4 pt-4 border-t border-[var(--border-color)] space-y-4">
-                        <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-[1rem] p-4">
+                        <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-4">
                           <div className="flex items-center space-x-2 text-emerald-400 font-bold mb-2">
                             <span>✓</span>
                             <span>REQUEST RESOLVED</span>
@@ -180,7 +180,7 @@ export function GuestPortal() {
                           )}
                           {req.compensation_offered && req.compensation_offered !== 'None' && (
                             <div className="mb-3 p-2 bg-amber-500/10 border border-amber-500/20 rounded">
-                              <span className="text-xs text-amber-500 font-bold block mb-1">COMPENSATION APPLIED:</span>
+                              <span className="text-xs text-[var(--color-resort-warning)] font-bold block mb-1">COMPENSATION APPLIED:</span>
                               <span className="text-sm text-amber-200">{req.compensation_offered} applied to your folio</span>
                             </div>
                           )}
@@ -202,7 +202,7 @@ export function GuestPortal() {
                         </div>
 
                         {/* Feedback Section */}
-                        <div className="bg-[var(--bg-secondary)] rounded-[1rem] p-4">
+                        <div className="bg-[var(--bg-secondary)] rounded-xl p-4">
                           <div className="text-sm font-semibold text-[var(--text-primary)] mb-2 text-center">Was the issue resolved satisfactorily?</div>
                           <div className="flex space-x-2 mb-4 justify-center">
                             {[1, 2, 3, 4, 5].map(star => (
@@ -244,7 +244,7 @@ export function GuestPortal() {
 
         {/* Right Col: Conversation */}
         <div className="lg:col-span-8 flex flex-col space-y-4">
-          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1.5rem] p-6 shadow-[var(--card-shadow)] flex-1 flex flex-col h-[600px]">
+          <div className="card flex-1 flex flex-col h-[600px]">
             <h2 className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-6 border-b border-[var(--card-border)] pb-4">Conversation</h2>
             
             <div className="flex-1 overflow-y-auto pr-4 space-y-6">
@@ -260,14 +260,14 @@ export function GuestPortal() {
                     <div key={i} className="space-y-4">
                       {/* Guest Message */}
                       <div className="flex justify-end">
-                        <div className="bg-[var(--accent)] text-[var(--on-accent)]  px-5 py-3 rounded-[1.5rem] rounded-tr-sm max-w-[80%] text-sm shadow-md">
+                        <div className="bg-[var(--accent)] text-[var(--on-accent)]  px-5 py-3 rounded-2xl rounded-tr-sm max-w-[80%] text-sm shadow-md">
                           {conv.message}
                         </div>
                       </div>
 
                       {/* AI Response */}
                       <div className="flex justify-start">
-                        <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] px-5 py-4 rounded-[1.5rem] rounded-tl-sm max-w-[90%] text-sm shadow-md space-y-4">
+                        <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] px-5 py-4 rounded-2xl rounded-tl-sm max-w-[90%] text-sm shadow-md space-y-4">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-xl">🤖</span>
                             <span className="font-bold text-xs text-[var(--accent)]">Resort AI</span>
@@ -276,7 +276,7 @@ export function GuestPortal() {
                           <p className="text-[var(--text-primary)] leading-relaxed">{conv.response}</p>
                           
                           {/* System Action Indicator */}
-                          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)]/50 rounded-[1rem] p-3 flex flex-wrap gap-4 mt-2">
+                          <div className="bg-[var(--bg-card)]/50 border border-[var(--border-color)]/50 rounded-xl p-3 flex flex-wrap gap-4 mt-2">
                             <div className="flex items-center gap-2">
                               <span className="text-emerald-400 text-xs">✓</span>
                               <span className="text-xs text-[var(--text-secondary)]">Request: <span className="font-bold text-[var(--text-primary)] capitalize">{conv.intent.replace('_', ' ')}</span></span>
@@ -309,12 +309,12 @@ export function GuestPortal() {
                 onChange={(e) => setRequestText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !loading && handleSubmit()}
                 placeholder="Tell us what you need..."
-                className="flex-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-[1rem] px-4 py-3 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent)] transition"
+                className="flex-1 bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-xl px-4 py-3 text-[var(--text-primary)] text-sm focus:outline-none focus:border-[var(--accent)] transition"
               />
               <button 
                 onClick={() => handleSubmit()}
                 disabled={loading || !requestText.trim()}
-                className="px-6 py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98]  font-bold rounded-[1rem] shadow-[var(--card-shadow)] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
+                className="px-6 py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98]  font-bold rounded-xl shadow-[var(--card-shadow)] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px]"
               >
                 {loading ? (
                   <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>

@@ -112,10 +112,10 @@ export function ReviewAndKanban() {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <div>
         <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">GUEST REVIEW INTEL & KANBAN</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] text-[var(--text-primary)] tracking-tight">GUEST REVIEW INTEL & KANBAN</h1>
           <span className="px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold rounded">
             ASPECT SENTIMENT & SLA
           </span>
@@ -126,7 +126,7 @@ export function ReviewAndKanban() {
       </div>
 
       {/* Input Review Box */}
-      <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5 space-y-4">
+      <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-5 space-y-4">
         <form onSubmit={handleAnalyze} className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="md:col-span-3">
@@ -200,7 +200,7 @@ export function ReviewAndKanban() {
           {columns.map((col) => {
             const colTickets = tickets.filter((t) => t.status === col.key);
             return (
-              <div key={col.key} className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 flex flex-col">
+              <div key={col.key} className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-xl p-4 flex flex-col">
                 <div className="flex justify-between items-center border-b border-[var(--card-border)] pb-2 mb-3">
                   <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">{col.label}</span>
                   <span className="text-xs text-[var(--text-muted)]">{colTickets.length}</span>

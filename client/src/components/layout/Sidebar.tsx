@@ -9,7 +9,8 @@ import {
   ShieldAlert,
   BrainCircuit,
   MessageSquare,
-  RefreshCw
+  RefreshCw,
+  Brain
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ROLE_LABELS } from '../../types';
@@ -26,6 +27,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Command Center', href: '/dashboard', icon: LayoutDashboard, end: true },
   { label: 'Time Machine', href: '/time-machine', icon: History },
+  { label: 'What-If Agent', href: '/what-if', icon: Brain },
   { label: 'Safe Envelope', href: '/safe-envelope', icon: ShieldAlert },
   { label: 'Decision Council', href: '/council', icon: BrainCircuit },
   { label: 'Review Intel', href: '/reviews', icon: MessageSquare },

@@ -3,22 +3,22 @@ import { useState, useEffect, useCallback } from 'react';
 const JWT = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` });
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING_APPROVAL: 'bg-amber-500/20 text-amber-400',
-  CLASSIFIED: 'bg-amber-500/20 text-amber-400',
-  ASSIGNED: 'bg-indigo-500/20 text-indigo-400',
-  ACCEPTED: 'bg-blue-500/20 text-blue-400',
-  IN_PROGRESS: 'bg-sky-500/20 text-sky-400',
-  COMPLETED: 'bg-emerald-500/20 text-emerald-400',
-  VERIFIED: 'bg-emerald-600/20 text-emerald-300',
-  DECLINED: 'bg-rose-500/20 text-rose-400',
-  ESCALATED: 'bg-rose-500/20 text-rose-400',
-  BLOCKED: 'bg-rose-500/20 text-rose-400',
+  PENDING_APPROVAL: 'badge badge-warning',
+  CLASSIFIED: 'badge badge-warning',
+  ASSIGNED: 'badge badge-primary',
+  ACCEPTED: 'badge badge-primary',
+  IN_PROGRESS: 'badge badge-primary',
+  COMPLETED: 'badge badge-success',
+  VERIFIED: 'badge badge-success',
+  DECLINED: 'badge badge-error',
+  ESCALATED: 'badge badge-error',
+  BLOCKED: 'badge badge-error',
 };
 
 const PRIORITY_COLORS: Record<string, string> = {
-  CRITICAL: 'bg-rose-500/25 text-rose-300', P0: 'bg-rose-500/25 text-rose-300',
-  HIGH: 'bg-rose-500/20 text-rose-400', P1: 'bg-rose-500/20 text-rose-400',
-  MEDIUM: 'bg-amber-500/20 text-amber-400', P2: 'bg-amber-500/20 text-amber-400',
+  CRITICAL: 'badge badge-error', P0: 'badge badge-error',
+  HIGH: 'badge badge-error', P1: 'badge badge-error',
+  MEDIUM: 'badge badge-warning', P2: 'badge badge-warning',
   LOW: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]', P3: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]', P4: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]',
 };
 
@@ -116,17 +116,17 @@ export function GuestRequestsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 space-y-8">
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Guests <span className="text-indigo-400">/ Guest Requests</span></h1>
+          <h1 className="text-3xl md:text-4xl font-display font-extrabold text-[var(--text-primary)] tracking-tight">Guests <span className="text-indigo-400">/ Guest Requests</span></h1>
           <p className="text-[var(--text-secondary)] text-sm mt-1">Every guest request, its live state, owner and manager decision trail.</p>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 font-bold">{pendingApproval.length + escalated.length} need decision</span>
-          <span className="px-3 py-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 font-bold">{active.length} active</span>
-          <span className="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold">{closed.length} closed</span>
+          <span className="px-3 py-1.5 rounded-lg badge badge-warning font-bold">{pendingApproval.length + escalated.length} need decision</span>
+          <span className="px-3 py-1.5 rounded-lg badge badge-primary font-bold">{active.length} active</span>
+          <span className="px-3 py-1.5 rounded-lg badge badge-success font-bold">{closed.length} closed</span>
           <span className="text-[var(--text-muted)] ml-2">updated {lastUpdated.toLocaleTimeString()} · live</span>
         </div>
       </div>
@@ -145,11 +145,11 @@ export function GuestRequestsPage() {
       </div>
 
       {/* Requests table */}
-      <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-2xl shadow-xl overflow-hidden">
+      <div className="card overflow-hidden !p-0">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="bg-[var(--bg-primary)] text-[10px] uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--card-border)]">
+              <tr className="bg-[var(--bg-secondary)] text-xs uppercase font-bold tracking-wider text-[var(--text-muted)] border-b border-[var(--border-color)]">
                 <th className="p-4 font-bold">Request</th>
                 <th className="p-4 font-bold">Guest / Room</th>
                 <th className="p-4 font-bold">Category</th>
@@ -166,7 +166,7 @@ export function GuestRequestsPage() {
                 <tr><td colSpan={9} className="p-10 text-center text-[var(--text-muted)] italic">No requests in this view.</td></tr>
               )}
               {visible.map((r: any) => (
-                <tr key={r.request_id} className="hover:bg-[var(--bg-secondary)]/30 transition align-top">
+                <tr key={r.request_id} className="hover:bg-[var(--bg-secondary)] transition-colors align-top">
                   <td className="p-4 max-w-xs">
                     <div className="font-bold text-white">{r.request_id}</div>
                     <div className="text-[var(--text-secondary)] text-xs mt-1">{r.request_text}</div>
@@ -195,9 +195,9 @@ export function GuestRequestsPage() {
                     {canDecide(r) && (
                       <div className="flex justify-end gap-1.5">
                         <button onClick={() => { setModal({ type: 'APPROVE', req: r }); setApproveNote(''); }}
-                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded uppercase transition">Approve</button>
+                          className="btn-primary !bg-[var(--color-resort-success)]">Approve</button>
                         <button onClick={() => { setModal({ type: 'MODIFY', req: r }); setReason(''); setModifyData({ priority: r.priority, department: r.department, assigned_staff: 'auto', instructions: r.resolution_notes || '' }); }}
-                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded uppercase transition">Modify</button>
+                          className="btn-primary">Modify</button>
                         <button onClick={() => { setModal({ type: 'DECLINE', req: r }); setReason(''); }}
                           className="px-3 py-1.5 bg-rose-600/80 hover:bg-rose-500 text-white text-[10px] font-bold rounded uppercase transition">Decline</button>
                       </div>

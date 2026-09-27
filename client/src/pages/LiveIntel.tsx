@@ -121,7 +121,7 @@ export function LiveIntel() {
             <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-cyan-400">
               <Activity size={12} className="animate-pulse" /> Live operations intelligence
             </p>
-            <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white sm:text-3xl">
+            <h1 className="mt-1.5 text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] tracking-tight text-white sm:text-3xl">
               Weather · Geospatial · Social Twin
             </h1>
             <p className="mt-1 max-w-3xl text-[13px] text-[var(--text-secondary)]">
@@ -231,7 +231,7 @@ export function LiveIntel() {
               <div className="mt-2 flex items-end gap-4">
                 <div>
                   <p className="text-[10px] uppercase text-[var(--text-secondary)]">Weather-adjusted</p>
-                  <p className="text-2xl font-black text-white">{model.weatherAdjusted?.occupancy_forecast}%</p>
+                  <p className="text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] text-white">{model.weatherAdjusted?.occupancy_forecast}%</p>
                 </div>
                 <div className="opacity-60">
                   <p className="text-[10px] uppercase text-[var(--text-secondary)]">Clear-sky counterfactual</p>

@@ -122,7 +122,7 @@ export function WeatherTwin() {
             <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-indigo-400">
               <Radar size={12} className="animate-pulse" /> Feature 4 · Digital twin what-if
             </p>
-            <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white sm:text-3xl">Weather Scenario Simulator</h1>
+            <h1 className="mt-1.5 text-2xl md:text-3xl font-display font-extrabold text-[var(--text-primary)] tracking-tight text-white sm:text-3xl">Weather Scenario Simulator</h1>
             <p className="mt-1 max-w-3xl text-[13px] text-[var(--text-secondary)]">
               Change intensity, duration, wind, temperature or storm location — the twin re-runs the live resort state and every
               downstream system (rooms, roster, F&amp;B, revenue, SLA) moves with it.
