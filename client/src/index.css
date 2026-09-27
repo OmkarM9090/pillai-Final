@@ -1,0 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-resort-primary: #1e3a5f;
+  --color-resort-primary-light: #2d5591;
+  --color-resort-accent: #c4973c;
+  --color-resort-accent-light: #d4aa5a;
+  --color-resort-gold: #b8860b;
+  --color-resort-surface: #f8f9fc;
+  --color-resort-border: #e2e8f0;
+  --color-resort-text: #1a202c;
+  --color-resort-muted: #64748b;
+  --color-resort-success: #059669;
+  --color-resort-warning: #d97706;
+  --color-resort-error: #dc2626;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-resort-surface);
+  color: var(--color-resort-text);
+  margin: 0;
+}
+
+/* ============================================================
+   Scrollbar styling
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ============================================================
+   Animation utilities
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 58, 95, 0.4); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(30, 58, 95, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(30, 58, 95, 0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out forwards;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+
+/* ============================================================
+   Form inputs
+   ============================================================ */
+.form-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: #fff;
+  border: 1.5px solid var(--color-resort-border);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-resort-text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus {
+  border-color: var(--color-resort-primary);
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+}
+
+.form-input::placeholder {
+  color: #94a3b8;
+}
+
+.form-input.error {
+  border-color: var(--color-resort-error);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.08);
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--color-resort-primary);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  user-select: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-resort-primary-light);
+  box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background: transparent;
+  color: var(--color-resort-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1.5px solid var(--color-resort-primary);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(30, 58, 95, 0.05);
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   Cards
+   ============================================================ */
+.card {
+  background: #fff;
+  border: 1px solid var(--color-resort-border);
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================================
+   Badges
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-primary {
+  background: rgba(30, 58, 95, 0.1);
+  color: var(--color-resort-primary);
+}
+
+.badge-gold {
+  background: rgba(196, 151, 60, 0.15);
+  color: var(--color-resort-gold);
+}
+
+.badge-success {
+  background: rgba(5, 150, 105, 0.1);
+  color: var(--color-resort-success);
+}
+
+.badge-warning {
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--color-resort-warning);
+}
+
+.badge-error {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--color-resort-error);
+}

@@ -1,0 +1,992 @@
+﻿import { Request, Response } from 'express';
+import { GuestRequest } from '../models/GuestRequest';
+import { ActionCard } from '../models/ActionCard';
+import { StaffRoster } from '../models/StaffRoster';
+import { OperationalTicket } from '../models/OperationalTicket';
+import { AuditLog } from '../models/AuditLog';
+import { Room } from '../models/Room';
+import { classifyRequest } from '../services/autonomyService';
+import { spawn } from 'child_process';
+import { Booking } from '../models/Booking';
+import { PantryInventory } from '../models/PantryInventory';
+import { MaintenanceAsset } from '../models/MaintenanceAsset';
+import { WorldSignal } from '../models/WorldSignal';
+import mongoose from 'mongoose';
+
+import { getCommandCenterState } from '../services/ai/commandCenterService';
+
+// ==========================================
+// NEW ENDPOINTS
+// ==========================================
+
+export const getDashboard = async (req: Request, res: Response) => {
+  try {
+    const dashboardState = await getCommandCenterState();
+    res.json({
+      success: true,
+      data: dashboardState
+    });
+  } catch (error) {
+    console.error('Command Center Error:', error);
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+import { runSimulation } from '../services/simulation/simulationEngine';
+import { getDigitalTwinSnapshot } from '../services/simulation/snapshot';
+
+export const simulate = async (req: Request, res: Response) => {
+  try {
+    const { occupancy_pct, weather_severity, demand_shock, staff_availability, inventory_availability } = req.body;
+    
+    // Call the actual digital twin simulation engine
+    const results = await runSimulation({
+      occupancy_pct: Number(occupancy_pct) || 80,
+      weather_severity: Number(weather_severity) || 0,
+      demand_shock: Number(demand_shock) || 1.0,
+      staff_availability: Number(staff_availability) || 1.0,
+      inventory_availability: Number(inventory_availability) || 1.0
+    });
+
+    const simRecord = await Simulation.create({ scenarioType: req.body.scenarioType || 'Custom', parameters: req.body, currentState: results.snapshot, projectedState: { resilience: results.resilience, pressures: results.pressures, safeCapacity: results.safeCapacity, goppar_estimate: results.decisionSummary.goppar_estimate }, constraints: results.pressures, bottlenecks: [results.primaryBottleneck], recommendation: results.strategies, createdBy: req.user?.name || 'System' });
+      res.json({ success: true, data: { ...results, id: simRecord._id } });
+  } catch (error) {
+    console.error('Simulation error:', error);
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getSafeEnvelope = async (req: Request, res: Response) => {
+  try {
+    const snapshot = await getDigitalTwinSnapshot();
+    const currentOccupancy = Math.round((snapshot.rooms.occupied / snapshot.rooms.total) * 100);
+
+    const baseSim = await runSimulation({
+      occupancy_pct: currentOccupancy,
+      weather_severity: 0,
+      demand_shock: 1.0,
+      staff_availability: 1.0,
+      inventory_availability: 1.0
+    });
+
+    res.json({
+      success: true,
+      data: {
+        resilienceScore: baseSim.resilience,
+        safe_occupancy_pct: baseSim.safeCapacity,
+        projected_demand_pct: currentOccupancy,
+        bottleneck_department: baseSim.primaryBottleneck.name,
+        limiting_factor: `Capacity limit reached for ${baseSim.primaryBottleneck.name} (${baseSim.primaryBottleneck.pressure}%)`,
+        constraints: baseSim.pressures.map(p => ({
+          name: p.name,
+          description: p.gap > 0 ? `Gap of ${p.gap} units` : 'Stable',
+          severity: p.pressure > 100 ? 100 : p.pressure,
+          impact: p.pressure > 90 ? 'High' : p.pressure > 70 ? 'Medium' : 'Low',
+          mitigation: p.gap > 0 ? `Requires ${p.gap} additional units` : 'None required'
+        })),
+        mitigationPlans: baseSim.strategies.map(s => ({
+          action: s.name,
+          capacity_gain: s.impact
+        }))
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getDecisionCouncil = async (req: Request, res: Response) => {
+  try {
+    const snapshot = await getDigitalTwinSnapshot();
+    const currentOccupancy = Math.round((snapshot.rooms.occupied / snapshot.rooms.total) * 100);
+
+    const baseSim = await runSimulation({
+      occupancy_pct: currentOccupancy,
+      weather_severity: 0,
+      demand_shock: 1.0,
+      staff_availability: 1.0,
+      inventory_availability: 1.0
+    });
+
+    const data = {
+      council_agents: baseSim.council.agents.map((a: any) => ({
+        name: `${a.name} Agent`,
+        role: 'Department Head',
+        risk: a.status === 'critical' ? 'CRITICAL' : (a.status === 'warning' ? 'ELEVATED' : 'NORMAL'),
+        verdict: a.status === 'critical' ? 'Require Mitigation' : 'Approve',
+        reasoning: a.recommendation
+      })),
+      chief_synthesis: {
+        title: baseSim.primaryBottleneck.pressure > 100 ? `MITIGATE ${baseSim.primaryBottleneck.name.toUpperCase()} BOTTLENECK` : 'PROCEED NORMALLY',
+        confidence: baseSim.council.consensus_score,
+        recommended_action: baseSim.council.chief_synthesis,
+        implementation_steps: baseSim.strategies.length > 0 ? baseSim.strategies.map((s: any) => s.action) : ['No action required'],
+        rollback_plan: 'Release temporary workers and restore standard operating procedures.'
+      }
+    };
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const generateActionCard = async (req: Request, res: Response) => {
+  try {
+    const { strategies, bottleneck, scenario } = req.body;
+      let actualStrategies = strategies;
+      let actualBottleneck = bottleneck || 'Housekeeping';
+      let actualScenario = scenario || { occupancy_pct: 95, weather_severity: 0, staff_availability: 1.0 };
+      if (!actualStrategies || actualStrategies.length === 0) {
+        const snap = await getDigitalTwinSnapshot();
+        const baseSim = await runSimulation({ occupancy_pct: 95, weather_severity: 0, demand_shock: 1.0, staff_availability: 1.0, inventory_availability: 1.0 });
+        actualStrategies = baseSim.strategies.length > 0 ? baseSim.strategies : [{ name: 'Fallback Mitigation', action: 'Reallocate 2 Spa staff to Housekeeping', impact: 'Reduces gap', risk: 'Low' }];
+        actualBottleneck = baseSim.primaryBottleneck.name;
+      }
+
+    const actionCard = await ActionCard.create({
+      title: `Simulation Plan: Address ${bottleneck} constraint`,
+      affected_departments: [actualBottleneck.toLowerCase()],
+      trigger: 'Simulation Output',
+      evidence: [`Occupancy at ${actualScenario.occupancy_pct}%`, `Weather Severity ${actualScenario.weather_severity}`, `Staff Avail ${actualScenario.staff_availability}`],
+      autonomy_level: 'MANAGER',
+      approval_required: true,
+      options: actualStrategies.map((s: any) => ({
+        label: s.name,
+        description: s.impact,
+        impact: s.risk
+      })),
+      implementation_steps: actualStrategies.map((s: any) => s.action)
+    });
+
+    res.json({ success: true, data: actionCard });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const approvePlan = async (req: Request, res: Response) => {
+  try {
+    const { actionCardId, action_id, decision, reason, modifications } = req.body;
+      const actualId = actionCardId || action_id;
+    let card = await ActionCard.findOne({ $or: [{ action_id: actionCardId }, { _id: actionCardId }] });
+
+    if (!card) {
+      return res.status(404).json({ success: false, message: 'ActionCard not found' });
+    }
+
+    // 1. Update ActionCard
+    card.approval_status = decision === 'REJECT' ? 'rejected' : 'approved';
+    await card.save();
+
+    // 2. AuditLog
+    await AuditLog.create({
+      action_id: card.action_id,
+      user_name: 'Command Center Manager',
+      user_role: 'MANAGER',
+      action_type: decision === 'APPROVE' ? 'PLAN_APPROVED' : decision === 'REJECT' ? 'PLAN_REJECTED' : 'PLAN_MODIFIED',
+      entity_type: 'ActionCard',
+      entity_id: card._id.toString(),
+      decision: decision,
+      reason: reason || `Manager manually ${decision.toLowerCase()}d the AI recommendation.`
+    });
+
+    if (decision !== 'REJECT') {
+      const department = modifications?.department || card.affected_departments?.[0] || 'maintenance';
+      const priority = modifications?.priority || 'High';
+      
+      let assignedStaff = modifications?.worker;
+      if (!assignedStaff || assignedStaff === 'auto') {
+        const availableStaff = await StaffRoster.findOne({ department, task_status: 'idle' }).sort('fatigue_score');
+        if (availableStaff) assignedStaff = availableStaff.name;
+      }
+
+      if (assignedStaff && assignedStaff !== 'auto') {
+        await StaffRoster.updateOne({ name: assignedStaff }, { task_status: 'busy' });
+      }
+
+      const ticket = await OperationalTicket.create({
+        title: card.title,
+        department: department,
+        priority: priority,
+        source: 'system',
+        assigned_to: assignedStaff !== 'auto' ? assignedStaff : undefined,
+        status: assignedStaff && assignedStaff !== 'auto' ? 'in_progress' : 'todo',
+        evidence_terms: card.evidence || [],
+        is_systemic: false,
+        resolution_notes: modifications?.instructions || undefined,
+        compensation_offered: modifications?.compensation || 'None',
+        relocation_offered: modifications?.relocation || 'No'
+      });
+
+      // Handle Room Relocation
+      if ((modifications?.relocation === 'Yes' || card.title.includes('MOVE TO ROOM') || card.implementation_steps?.join(' ').includes('MOVE TO ROOM')) && card.evidence) {
+        const roomEvidence = card.evidence.find((e: string) => e.startsWith('Room '));
+        if (roomEvidence) {
+          const oldRoom = roomEvidence.replace('Room ', '');
+          const currRoom = await Room.findOne({ room_number: oldRoom });
+          if (currRoom) {
+            const newRoom = await Room.findOne({ type: currRoom.type, status: 'available' });
+            if (newRoom) {
+              currRoom.status = 'cleaning';
+              newRoom.status = 'occupied';
+              await currRoom.save();
+              await newRoom.save();
+              
+              await Booking.updateOne(
+                { room_number: oldRoom, status: 'checked-in' },
+                { room_number: newRoom.room_number }
+              );
+
+              await GuestRequest.updateMany(
+                { room_number: oldRoom, status: { $ne: 'COMPLETED' } },
+                { 
+                  room_number: newRoom.room_number, 
+                  resolution_notes: `Guest moved to room ${newRoom.room_number}. ${modifications?.instructions || ''}`,
+                  compensation_offered: modifications?.compensation !== 'None' ? modifications?.compensation : undefined
+                }
+              );
+              ticket.resolution_notes = `Room relocated from ${oldRoom} to ${newRoom.room_number}`;
+              await ticket.save();
+            }
+          }
+        }
+      } else if (modifications?.compensation && modifications.compensation !== 'None' && card.evidence) {
+        const roomEvidence = card.evidence.find((e: string) => e.startsWith('Room '));
+        if (roomEvidence) {
+          const room = roomEvidence.replace('Room ', '');
+          await GuestRequest.updateMany(
+            { room_number: room, status: { $ne: 'COMPLETED' } },
+            { compensation_offered: modifications.compensation }
+          );
+        }
+      }
+
+      // Simulation/dynamic steps
+      const steps = card.implementation_steps?.join(', ') || '';
+      if (steps.toLowerCase().includes('temp worker')) {
+        await StaffRoster.create({
+          name: `Temporary Worker - ${Math.floor(Math.random()*1000)}`,
+          role: 'contractor',
+          department: department,
+          skills: ['general'],
+          shift_start: new Date().toISOString(),
+          shift_end: new Date(Date.now() + 8*60*60*1000).toISOString(),
+          is_available: true,
+          task_status: 'busy',
+          fatigue_score: 0
+        });
+      }
+    }
+
+    res.json({ success: true, message: `Plan ${decision}`, data: card });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const parseReview = async (req: Request, res: Response) => {
+  try {
+    const { review_text, room_number } = req.body;
+    const classification = classifyRequest(review_text);
+    
+    const ticket = await OperationalTicket.create({
+      title: `Review Alert: ${classification.intent}`,
+      department: classification.department,
+      priority: classification.priority === 'LOW' ? 'Medium' : classification.priority,
+      source: 'review',
+      room_number: room_number,
+      evidence_terms: [classification.intent],
+      is_systemic: false
+    });
+
+    res.json({
+      success: true,
+      data: {
+        aspect: classification.intent,
+        sentiment: 'NEGATIVE',
+        department: classification.department,
+        evidence_terms: [classification.intent],
+        ticket
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getTickets = async (req: Request, res: Response) => {
+  try {
+    const tickets = await OperationalTicket.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: tickets });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getActionCards = async (req: Request, res: Response) => {
+  try {
+    const cards = await ActionCard.find().sort({ createdAt: -1 });
+    res.json({ success: true, data: cards });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getAuditLogs = async (req: Request, res: Response) => {
+  try {
+    const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(50);
+    res.json({ success: true, data: logs });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getStaff = async (req: Request, res: Response) => {
+  try {
+    const staff = await StaffRoster.find();
+    res.json({ success: true, data: staff });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const updateTicket = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const ticket = await OperationalTicket.findOneAndUpdate(
+      { ticket_id: id },
+      { status },
+      { new: true }
+    );
+    if (ticket) {
+      res.json({ success: true, data: ticket });
+    } else {
+      res.status(404).json({ success: false, message: 'Ticket not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+import { processConciergeMessage } from '../services/ai/guestConciergeService';
+
+export const handleGuestConcierge = async (req: Request, res: Response) => {
+  try {
+    const { guestId, roomNumber, message } = req.body;
+    
+    if (!guestId || !roomNumber || !message) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const conciergeResponse = await processConciergeMessage(guestId, roomNumber, message);
+
+    res.json(conciergeResponse);
+  } catch (error) {
+    console.error('Concierge Error:', error);
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+
+import { GuestConversation } from '../models/GuestConversation';
+
+export const getGuestConversations = async (req: Request, res: Response) => {
+  try {
+    const { guestId } = req.params;
+    const conversations = await GuestConversation.find({ guest_id: guestId }).sort({ created_at: 1 });
+    res.json({ success: true, data: conversations });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+// ==========================================
+// EXISTING ENDPOINTS (UPDATED)
+// ==========================================
+
+import { processGuestRequest } from '../services/ai/orchestrator';
+
+export const handleGuestRequest = async (req: Request, res: Response) => {
+  try {
+    const { guest_name, room_number, request_text } = req.body;
+    
+    const guestReq = await processGuestRequest(guest_name, room_number, request_text);
+
+    res.json({ success: true, data: guestReq });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getGuestRequests = async (req: Request, res: Response) => {
+  try {
+    const requests = await GuestRequest.find().sort({ created_at: -1 });
+    res.json({ success: true, data: requests });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getWorkerTasks = async (req: Request, res: Response) => {
+  try {
+    const staffName = req.params.staffName as string;
+    const guestRequests = await GuestRequest.find({ assigned_staff: staffName });
+    const operationalTickets = await OperationalTicket.find({ assigned_to: staffName });
+    res.json({ success: true, guestRequests, operationalTickets });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const acceptWorkerTask = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    let reqDoc: any = await GuestRequest.findOne({ request_id: id });
+    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+
+    reqDoc.status = 'ACCEPTED';
+    await reqDoc.save();
+
+    if (reqDoc.assigned_staff || reqDoc.assigned_to) {
+      await StaffRoster.updateOne({ name: reqDoc.assigned_staff || reqDoc.assigned_to }, { task_status: 'busy' });
+    }
+
+    await AuditLog.create({
+      action_id: id,
+      user_name: reqDoc.assigned_staff || reqDoc.assigned_to || 'Worker',
+      user_role: 'WORKER',
+      action_type: 'TASK_ACCEPTED',
+      entity_type: 'Task',
+      entity_id: reqDoc._id.toString(),
+      decision: 'Accepted'
+    });
+
+    res.json({ success: true, data: reqDoc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const rejectWorkerTask = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { reason } = req.body;
+    let reqDoc: any = await GuestRequest.findOne({ request_id: id });
+    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+    
+    // Auto-reassign logic
+    const department = reqDoc.department;
+    const currentWorker = reqDoc.assigned_staff || reqDoc.assigned_to;
+    const availableStaff = await StaffRoster.findOne({ department, task_status: 'idle', name: { $ne: currentWorker } }).sort('fatigue_score');
+
+    if (availableStaff) {
+      if (reqDoc.assigned_staff !== undefined) reqDoc.assigned_staff = availableStaff.name;
+      if (reqDoc.assigned_to !== undefined) reqDoc.assigned_to = availableStaff.name;
+      reqDoc.status = 'ASSIGNED';
+      await StaffRoster.updateOne({ name: availableStaff.name }, { task_status: 'busy' });
+    } else {
+      reqDoc.status = 'REJECTED';
+      reqDoc.rejection_reason = reason;
+      // Escalate to manager queue by making it an ActionCard
+      await ActionCard.create({
+        title: `Task Rejected & Unassigned: ${reqDoc.title || reqDoc.request_text}`,
+        affected_departments: [department],
+        trigger: 'Worker Rejection',
+        evidence: [reason],
+        autonomy_level: 'MANAGER',
+        approval_required: true,
+        options: [],
+        implementation_steps: []
+      });
+    }
+    
+    await reqDoc.save();
+
+    if (currentWorker) {
+      await StaffRoster.updateOne({ name: currentWorker }, { task_status: 'idle' });
+    }
+
+    await AuditLog.create({
+      action_id: id,
+      user_name: currentWorker || 'Worker',
+      user_role: 'WORKER',
+      action_type: 'TASK_REJECTED',
+      entity_type: 'Task',
+      entity_id: reqDoc._id.toString(),
+      decision: 'Rejected',
+      reason: reason
+    });
+
+    res.json({ success: true, data: reqDoc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const startWorkerTask = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    let reqDoc: any = await GuestRequest.findOne({ request_id: id });
+    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+
+    reqDoc.status = 'IN_PROGRESS';
+    await reqDoc.save();
+
+    const worker = reqDoc.assigned_staff || reqDoc.assigned_to;
+    if (worker) {
+      await StaffRoster.updateOne({ name: worker }, { task_status: 'in_progress' });
+    }
+
+    res.json({ success: true, data: reqDoc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const completeWorkerTask = async (req: Request, res: Response) => {
+  try {
+    const taskId = req.params.taskId as string;
+    const { completion_note, staff_name } = req.body;
+    
+    let reqDoc: any = await GuestRequest.findOne({ request_id: taskId });
+    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: taskId });
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Task not found' });
+
+    reqDoc.status = 'COMPLETED';
+    if (reqDoc.completed_at !== undefined) reqDoc.completed_at = new Date();
+    if (reqDoc.completion_note !== undefined) reqDoc.completion_note = completion_note;
+    if (reqDoc.resolution_notes !== undefined) reqDoc.resolution_notes = completion_note;
+    await reqDoc.save();
+
+    if (staff_name) {
+      await StaffRoster.updateOne({ name: staff_name }, { task_status: 'idle' });
+    }
+
+    await AuditLog.create({
+      user_name: staff_name || 'System',
+      user_role: 'WORKER',
+      action_type: 'TASK_COMPLETED',
+      entity_type: 'Task',
+      entity_id: reqDoc._id.toString(),
+      decision: `Completed task: ${completion_note || 'No note'}`
+    });
+
+    res.json({ success: true, data: reqDoc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const blockWorkerTask = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const { reason } = req.body;
+    let reqDoc: any = await GuestRequest.findOne({ request_id: id });
+    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+
+    reqDoc.status = 'BLOCKED';
+    await reqDoc.save();
+
+    const currentWorker = reqDoc.assigned_staff || reqDoc.assigned_to;
+    if (currentWorker) {
+      await StaffRoster.updateOne({ name: currentWorker }, { task_status: 'idle' });
+    }
+
+    let implementation_steps: string[] = [];
+    
+    // Find room alternatives if applicable
+    const roomNumber = reqDoc.room_number || (reqDoc.title?.match(/Room (\d+)/) || [])[1];
+    if (roomNumber) {
+      const currRoom = await Room.findOne({ room_number: roomNumber });
+      if (currRoom) {
+        const alternatives = await Room.find({ type: currRoom.type, status: 'available' }).limit(2);
+        if (alternatives.length > 0) {
+          implementation_steps = alternatives.map(a => `MOVE TO ROOM ${a.room_number}`);
+          implementation_steps.unshift('KEEP GUEST IN ROOM');
+        }
+      }
+    }
+
+    await ActionCard.create({
+      title: `ESCALATION: ${reqDoc.title || reqDoc.request_text}`,
+      affected_departments: [reqDoc.department],
+      trigger: `Unresolved by ${currentWorker || 'Worker'}`,
+      evidence: [reason, `Room ${roomNumber}`],
+      autonomy_level: 'MANAGER',
+      approval_required: true,
+      options: [],
+      implementation_steps: implementation_steps.length > 0 ? implementation_steps : ['Review and reassign', 'Contact guest']
+    });
+
+    await AuditLog.create({
+      action_id: id,
+      user_name: currentWorker || 'Worker',
+      user_role: 'WORKER',
+      action_type: 'TASK_BLOCKED',
+      entity_type: 'Task',
+      entity_id: reqDoc._id.toString(),
+      decision: 'Blocked',
+      reason: reason
+    });
+
+    res.json({ success: true, data: reqDoc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const feedbackGuestRequest = async (req: Request, res: Response) => {
+  try {
+    const requestId = req.params.requestId as string;
+    const { guest_feedback, guest_rating } = req.body;
+    
+    const reqDoc = await GuestRequest.findOneAndUpdate(
+      { request_id: requestId },
+      { 
+        guest_rating,
+        guest_feedback,
+        status: 'VERIFIED'
+      },
+      { new: true }
+    );
+
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+
+    if (guest_rating <= 2 || guest_feedback?.toLowerCase().includes('not resolved')) {
+      await ActionCard.create({
+        title: `Service Recovery: Poor Feedback (${guest_rating} Stars)`,
+        affected_departments: [reqDoc.department, 'management'],
+        trigger: 'Guest Feedback',
+        evidence: [`Task: ${reqDoc.intent}`, `Feedback: ${guest_feedback}`],
+        autonomy_level: 'MANAGER',
+        approval_required: true,
+        options: [
+          { label: 'Offer Apology', description: 'Contact guest immediately', impact: 'Low' },
+          { label: 'Offer Compensation', description: 'Comp meal or spa treatment', impact: 'Medium' }
+        ],
+        implementation_steps: ['Investigate worker response', 'Contact guest']
+      });
+      await AuditLog.create({
+        user_name: 'AI Orchestrator',
+        action_type: 'SERVICE_RECOVERY_TRIGGERED',
+        decision: `Triggered service recovery for task ${requestId} due to low rating.`
+      });
+    }
+
+    res.json({ success: true, data: reqDoc });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const clusterComplaints = async (req: Request, res: Response) => {
+  try {
+    const time_window_hours = req.body.time_window_hours || 2;
+    const since = new Date(Date.now() - time_window_hours * 60 * 60 * 1000);
+
+    const guestReqs = await GuestRequest.find({ created_at: { $gte: since } });
+    const tickets = await OperationalTicket.find({ createdAt: { $gte: since } });
+    
+    const groups: Record<string, any[]> = {};
+    for (const req of guestReqs) {
+      const key = `${req.intent}_${req.department}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push({ type: 'GuestRequest', item: req });
+    }
+    
+    const clusters = [];
+    let systemic_alerts = 0;
+
+    for (const key of Object.keys(groups)) {
+      if (groups[key].length >= 3) {
+        systemic_alerts++;
+        const cluster_id = `CLS-${Date.now()}`;
+        const items = groups[key];
+        const rooms = items.map(i => i.item.room_number);
+        const intent = items[0].item.intent;
+        
+        for (const i of items) {
+          await GuestRequest.updateOne({ _id: i.item._id }, { priority: 'CRITICAL' });
+        }
+        
+        const masterTicket = await OperationalTicket.create({
+          title: `Systemic Issue: ${intent} across ${rooms.length} rooms`,
+          department: items[0].item.department,
+          priority: 'CRITICAL',
+          cluster_id: cluster_id,
+          is_systemic: true,
+          evidence_terms: [intent]
+        });
+        
+        const actionCard = await ActionCard.create({
+          title: `Systemic Resolution for ${intent}`,
+          affected_departments: [items[0].item.department],
+          trigger: 'Complaint Cluster',
+          evidence: rooms,
+          autonomy_level: 'CRITICAL',
+          approval_required: true,
+          options: []
+        });
+
+        clusters.push({
+          intent, count: items.length, rooms, cluster_id, master_ticket: masterTicket, action_card: actionCard
+        });
+      }
+    }
+
+    res.json({ success: true, clusters, systemic_alerts });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const reallocateRoom = async (req: Request, res: Response) => {
+  try {
+    const { guest_name, current_room, reason } = req.body as { guest_name: string, current_room: string, reason: string };
+    
+    const currRoom = await Room.findOne({ room_number: current_room });
+    if (!currRoom) return res.status(404).json({ success: false, message: 'Room not found' });
+
+    const recommended = await Room.findOne({ type: currRoom.type, status: 'available' });
+    
+    if (!recommended) {
+      return res.json({ success: false, message: 'No available rooms of this type' });
+    }
+    
+    const actionCard = await ActionCard.create({
+      title: `Reallocate ${guest_name} from ${current_room} to ${recommended.room_number}`,
+      affected_departments: ['front_desk', 'housekeeping'],
+      trigger: reason,
+      situation: reason,
+      evidence: [],
+      autonomy_level: 'MANAGER',
+      approval_required: true,
+      options: [{ label: 'Approve Reallocation', description: 'Moves guest and marks old room for cleaning', impact: 'Guest satisfaction' }]
+    });
+    
+    res.json({
+      success: true,
+      recommended_room: recommended,
+      alternatives: [],
+      action_card: actionCard
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const resetDemo = async (req: Request, res: Response) => {
+  try {
+    await Room.deleteMany({});
+    await Booking.deleteMany({});
+    await StaffRoster.deleteMany({});
+    await PantryInventory.deleteMany({});
+    await MaintenanceAsset.deleteMany({});
+    await WorldSignal.deleteMany({});
+    await OperationalTicket.deleteMany({});
+    await ActionCard.deleteMany({});
+    await AuditLog.deleteMany({});
+    await GuestRequest.deleteMany({});
+    
+    const rooms = [];
+    for (let floor = 1; floor <= 5; floor++) {
+      for (let i = 0; i < 10; i++) {
+        const roomNumber = `${floor}${String(i + 1).padStart(2, '0')}`;
+        let type = 'Standard', rate = 150;
+        if (i >= 6 && i < 9) { type = 'Deluxe'; rate = 250; } 
+        else if (i === 9) { type = 'Suite'; rate = 450; }
+        
+        rooms.push({ room_number: roomNumber, type, status: 'available', rate_per_night: rate, floor });
+      }
+    }
+    for (let i = 0; i < 41; i++) rooms[i].status = 'occupied';
+    for (let i = 41; i < 44; i++) rooms[i].status = 'cleaning';
+    for (let i = 44; i < 46; i++) rooms[i].status = 'maintenance';
+    await Room.insertMany(rooms);
+
+    const bookings = [];
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    for (let i = 0; i < 41; i++) {
+      const room = rooms[i];
+      const checkIn = i % 2 === 0 ? today : yesterday;
+      const checkOut = new Date(checkIn);
+      checkOut.setDate(checkOut.getDate() + (i % 5) + 1);
+      bookings.push({ guest_name: `Guest ${room.room_number}`, room_number: room.room_number, check_in: checkIn, check_out: checkOut, status: 'checked-in', guests_count: (i % 4) + 1, rate_locked: room.rate_per_night, source: 'direct' });
+    }
+    await Booking.insertMany(bookings);
+
+    const staffDepts = [
+      { name: 'housekeeping', count: 8 }, { name: 'front_desk', count: 5 }, { name: 'fnb', count: 7 },
+      { name: 'maintenance', count: 4 }, { name: 'spa', count: 3 }, { name: 'security', count: 3 }
+    ];
+    const staffMembers: any[] = [];
+    for (const dept of staffDepts) {
+      for (let i = 0; i < dept.count; i++) {
+        const prefix = dept.name === 'front_desk' ? 'FD' : dept.name === 'fnb' ? 'FNB' : dept.name.charAt(0).toUpperCase();
+        staffMembers.push({ name: `Staff ${prefix}${i + 1}`, department: dept.name, skills: [], cross_trained: [], fatigue_score: Math.floor(Math.random() * 46) + 15, hourly_rate: Math.floor(Math.random() * 11) + 15, is_available: true, task_status: 'idle' });
+      }
+    }
+    const spaStaff = staffMembers.filter(s => s.department === 'spa');
+    if (spaStaff.length >= 2) { spaStaff[0].cross_trained.push('front_desk'); spaStaff[1].cross_trained.push('front_desk'); }
+    staffMembers[0].is_available = false; staffMembers[10].is_available = false;
+    
+    const req1 = await GuestRequest.create({ guest_name: 'Guest 105', room_number: '105', request_text: "I need an extra towel please", intent: 'TOWEL', priority: 'LOW', autonomy_level: 'AUTO', department: 'housekeeping', status: 'ASSIGNED', assigned_staff: staffMembers[0].name });
+    const req2 = await GuestRequest.create({ guest_name: 'Guest 204', room_number: '204', request_text: "The AC in my room is making a terrible noise", intent: 'AC', priority: 'MEDIUM', autonomy_level: 'SUPERVISOR', department: 'maintenance', status: 'CLASSIFIED' });
+    const req3 = await GuestRequest.create({ guest_name: 'Guest 112', room_number: '112', request_text: "Can I get two more pillows?", intent: 'PILLOW', priority: 'LOW', autonomy_level: 'AUTO', department: 'housekeeping', status: 'ASSIGNED', assigned_staff: staffMembers[1].name });
+
+    staffMembers[0].task_status = 'assigned';
+    staffMembers[0].current_task_id = req1.request_id;
+    staffMembers[1].task_status = 'assigned';
+    staffMembers[1].current_task_id = req3.request_id;
+    
+    await StaffRoster.insertMany(staffMembers);
+
+    await PantryInventory.insertMany([
+      { item_name: 'Fresh Salmon', current_stock_kg: 15, safety_threshold_kg: 10, daily_consumption_rate_kg: 3 },
+      { item_name: 'Avocado', current_stock_kg: 20, safety_threshold_kg: 8, daily_consumption_rate_kg: 2 },
+      { item_name: 'Butter', current_stock_kg: 30, safety_threshold_kg: 10, daily_consumption_rate_kg: 4 },
+      { item_name: 'Champagne', current_stock_kg: 50, safety_threshold_kg: 15, daily_consumption_rate_kg: 8 },
+      { item_name: 'Steak', current_stock_kg: 25, safety_threshold_kg: 8, daily_consumption_rate_kg: 5 }
+    ]);
+
+    await MaintenanceAsset.insertMany([
+      { asset_id: 'HVAC-Roof', name: 'HVAC Roof Unit', type: 'HVAC', condition_score: 72 },
+      { asset_id: 'Elevator-Main', name: 'Main Lobby Elevator', type: 'elevator', condition_score: 85 }
+    ]);
+
+    await WorldSignal.create({ signal_type: 'weather', severity: 0.7, affected_departments: ['front_desk', 'fnb'], is_active: true });
+
+    await OperationalTicket.create({ title: 'AC rattling Room 204', department: 'maintenance', priority: 'High', status: 'todo', source: 'review', room_number: '204' });
+    await OperationalTicket.create({ title: 'Elevator slow response', department: 'maintenance', priority: 'Medium', status: 'in_progress', source: 'guest_request' });
+
+    res.json({ success: true, message: 'Demo reset completed' });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+export const acknowledgeTicket = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const ticket = await OperationalTicket.findByIdAndUpdate(id, { status: 'ACKNOWLEDGED' }, { new: true });
+    
+    if (ticket) {
+      await AuditLog.create({
+        action_type: 'TICKET_ACKNOWLEDGED',
+        user_name: req.user?.name,
+        user_role: req.user?.role,
+        entity_type: 'OperationalTicket',
+        entity_id: String(ticket._id),
+        reason: 'Manager acknowledged critical incident'
+      });
+    }
+
+    res.json({ success: true, ticket });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+
+
+
+
+import { Simulation } from '../models/Simulation';
+import { TwinSnapshot } from '../models/TwinSnapshot';
+
+export const getSimulations = async (req: Request, res: Response) => {
+  try {
+    const simulations = await Simulation.find({}).sort({ createdAt: -1 }).limit(20);
+    res.json({ success: true, data: simulations });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getSimulationById = async (req: Request, res: Response) => {
+  try {
+    const sim = await Simulation.findById(req.params.id);
+    res.json({ success: true, data: sim });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const applySimulation = async (req: Request, res: Response) => {
+  try {
+    const sim = await Simulation.findById(req.params.id);
+    if (!sim) return res.status(404).json({ success: false, error: 'Simulation not found' });
+    sim.decision = 'APPROVED';
+    await sim.save();
+    
+    await AuditLog.create({
+      action_type: 'SIMULATION_RECOMMENDATION_APPROVED',
+      user_name: req.user?.name,
+      user_role: req.user?.role,
+      entity_type: 'Simulation',
+      entity_id: String(sim._id),
+      reason: 'Manager approved simulated recommendation'
+    });
+    
+    res.json({ success: true, data: sim });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const rejectSimulation = async (req: Request, res: Response) => {
+  try {
+    const sim = await Simulation.findById(req.params.id);
+    if (!sim) return res.status(404).json({ success: false, error: 'Simulation not found' });
+    sim.decision = 'REJECTED';
+    await sim.save();
+    
+    await AuditLog.create({
+      action_type: 'SIMULATION_RECOMMENDATION_REJECTED',
+      user_name: req.user?.name,
+      user_role: req.user?.role,
+      entity_type: 'Simulation',
+      entity_id: String(sim._id),
+      reason: 'Manager rejected simulated recommendation'
+    });
+    
+    res.json({ success: true, data: sim });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const createTwinSnapshot = async (req: Request, res: Response) => {
+  try {
+    const data = await getDigitalTwinSnapshot();
+    const snap = await TwinSnapshot.create(data);
+    res.json({ success: true, data: snap });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+export const getTwinHistory = async (req: Request, res: Response) => {
+  try {
+    const history = await TwinSnapshot.find({}).sort({ timestamp: -1 }).limit(10);
+    res.json({ success: true, data: history });
+  } catch (error) {
+    res.status(500).json({ success: false, error: String(error) });
+  }
+};
+
+
+
+
+
+
