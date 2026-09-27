@@ -26,6 +26,14 @@ export function TimeMachine() {
   const [weeklyForecast, setWeeklyForecast] = useState<any[] | null>(null);
   const [forecastFallback, setForecastFallback] = useState(false);
 
+  // Seed the twin with the live weather signal; the slider remains available for what-if testing.
+  useEffect(() => {
+    fetch('/api/v1/world-intel', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }).then(r => r.json()).then(j => {
+      const severity = j.data?.current?.severity;
+      if (typeof severity === 'number') setWeatherSeverity(severity);
+    }).catch(() => undefined);
+  }, []);
+
   // Fetch real trained-ML occupancy forecast (Ridge/Gradient Boosting models via ML core)
   useEffect(() => {
     fetch('/api/v1/forecast/weekly', {

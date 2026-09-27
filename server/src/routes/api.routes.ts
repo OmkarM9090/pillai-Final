@@ -37,8 +37,19 @@ import {
 } from '../controllers/api.controller';
 import { authenticate, authorize } from '../middleware/auth.middleware';
 import { ROLES } from '../config/constants';
+import { getWorldIntel, askGemini } from '../services/worldIntelService';
 
 const router = Router();
+
+// Live external intelligence: weather + public social/news signals + Gemini reasoning.
+router.get('/world-intel', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), async (_req, res) => {
+  try { res.json({ success: true, data: await getWorldIntel() }); }
+  catch (error: any) { res.status(502).json({ success: false, error: error.message }); }
+});
+router.post('/world-intel/ask', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), async (req, res) => {
+  try { const context = await getWorldIntel(); res.json({ success: true, data: await askGemini(req.body.prompt || 'Assess operational risk and recommend safe actions.', context) }); }
+  catch (error: any) { res.status(502).json({ success: false, error: error.message }); }
+});
 
 // ==========================================
 // MANAGER / SUPERVISOR / ADMIN ROUTES
