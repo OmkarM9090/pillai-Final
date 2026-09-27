@@ -2,6 +2,42 @@
 
 > AI-powered resort operations, guest experience, and revenue intelligence platform.
 
+## 🚀 Hackathon Quick Start (3 terminals, no MongoDB install needed)
+
+```bash
+# Terminal 1 — local Mongo-compatible DB (SQLite-backed, zero setup)
+cd server && npm install && npm run db:local
+
+# Terminal 2 — API server (seeds demo data first)
+cd server
+cp .env.example .env   # then set MONGODB_URI=mongodb://127.0.0.1:27017/smart-resort-360
+npm run seed:all       # seeds rooms, staff, demo users + admin
+npm run dev            # API on http://localhost:5000
+
+# Terminal 3 — frontend
+cd client && npm install && npm run dev   # http://localhost:5173
+```
+
+### Demo logins (password: `demo123`)
+
+| Persona | Email | Lands on |
+|---------|-------|----------|
+| Manager | `manager@smartresort.demo` | Command Center Dashboard |
+| Supervisor | `housekeeping.supervisor@smartresort.demo` | Dashboard |
+| Worker | `housekeeper@smartresort.demo` | Worker Portal |
+| Guest | `guest@smartresort.demo` | Guest Concierge Portal |
+| Super Admin | `admin@resort360.com` | Dashboard (password: `Admin@123456`) |
+
+### 3-minute demo script
+
+1. **Guest portal** (`guest@smartresort.demo`) → type *"The AC in my room is broken"* → AI concierge classifies intent, sets priority/SLA and auto-dispatches staff.
+2. Repeat the AC complaint from 2 more rooms → **Manager → Incidents** → *Cluster Complaints* → systemic issue detected, master ticket + action card created.
+3. **Worker portal** (`housekeeper@smartresort.demo`) → accept → start → complete the task; guest can then rate it (low rating triggers automatic service recovery).
+4. **Manager → Time Machine** → push occupancy to 95% + storm severity → run simulation → *Create Action Plan* → approve it in **Council & Approval**.
+5. **Dashboard** shows live occupancy, department pressure, critical incidents and the audit trail the whole time (auto-refreshes).
+
+---
+
 ## Prerequisites
 
 | Tool | Version |

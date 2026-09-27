@@ -9,7 +9,7 @@ export function ReviewAndKanban() {
 
   const fetchTickets = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/v1/tickets', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      const res = await fetch('/api/v1/tickets', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       const text = await res.text();
       try {
         const json = JSON.parse(text);
@@ -40,7 +40,7 @@ export function ReviewAndKanban() {
     e.preventDefault();
     setAnalyzing(true);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/parse-review', {
+      const res = await fetch('/api/v1/parse-review', {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ review_text: reviewText, room_number: roomNumber }),
@@ -83,7 +83,7 @@ export function ReviewAndKanban() {
 
   const updateStatus = async (ticketId: string, nextStatus: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/tickets/${ticketId}`, {
+      const res = await fetch(`/api/v1/tickets/${ticketId}`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus }),

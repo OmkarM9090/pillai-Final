@@ -17,7 +17,7 @@ export function GuestPortal() {
   const fetchData = async () => {
     try {
       // Fetch Requests
-      const reqRes = await fetch('http://localhost:5000/api/v1/guest-requests', { 
+      const reqRes = await fetch('/api/v1/guest-requests', { 
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } 
       });
       const reqJson = await reqRes.json();
@@ -26,7 +26,7 @@ export function GuestPortal() {
       }
 
       // Fetch Conversations
-      const convRes = await fetch(`http://localhost:5000/api/v1/guest/conversations/${guestId}`, {
+      const convRes = await fetch(`/api/v1/guest/conversations/${guestId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       const convJson = await convRes.json();
@@ -48,7 +48,7 @@ export function GuestPortal() {
     if (!textToSubmit.trim()) return;
     setLoading(true);
     try {
-      await fetch('http://localhost:5000/api/v1/guest/concierge', {
+      await fetch('/api/v1/guest/concierge', {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ guestId, roomNumber, message: textToSubmit }),
@@ -64,7 +64,7 @@ export function GuestPortal() {
 
   const handleFeedback = async (requestId: string) => {
     try {
-      await fetch(`http://localhost:5000/api/v1/guest-requests/${requestId}/feedback`, {
+      await fetch(`/api/v1/guest-requests/${requestId}/feedback`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({

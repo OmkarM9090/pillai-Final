@@ -60,7 +60,7 @@ router.get('/action-cards', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVI
 router.get('/audit-logs', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), getAuditLogs);
 router.get('/staff', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), getStaff);
 
-router.get('/guest-requests', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN), getGuestRequests);
+router.get('/guest-requests', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN, ROLES.GUEST), getGuestRequests);
 
 // ==========================================
 // SIMULATION & DIGITAL TWIN ROUTES

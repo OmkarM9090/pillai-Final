@@ -1,4 +1,5 @@
 import { GuestRequest } from '../../models/GuestRequest';
+import { dateGte } from '../../utils/dbCompat';
 import { StaffRoster } from '../../models/StaffRoster';
 import { ActionCard } from '../../models/ActionCard';
 import { AuditLog } from '../../models/AuditLog';
@@ -123,10 +124,10 @@ export async function processGuestRequest(guest_name: string, room_number: strin
   // If > 2 complaints about AC or PLUMBING in the last hour, escalate to Master Incident
   if (nlp.intent === 'AC' || nlp.intent === 'PLUMBING' || nlp.intent === 'WIFI') {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const similarComplaints = await GuestRequest.countDocuments({
+    const similarComplaints = await GuestRequest.collection.countDocuments({
       intent: nlp.intent,
-      created_at: { $gte: oneHourAgo }
-    });
+      ...dateGte('created_at', oneHourAgo)
+    } as any);
 
     if (similarComplaints >= 3) {
       await ActionCard.create({

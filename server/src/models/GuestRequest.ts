@@ -36,7 +36,7 @@ const GuestRequestSchema = new Schema<IGuestRequest>({
   autonomy_level: { type: String, enum: ['AUTO', 'SUPERVISOR', 'MANAGER', 'CRITICAL'], default: 'AUTO' },
   department: { type: String, required: true },
   assigned_staff: { type: String },
-  status: { type: String, enum: ['CREATED', 'CLASSIFIED', 'ROUTED', 'ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'VERIFICATION_PENDING', 'VERIFIED', 'CANCELLED', 'REJECTED', 'ESCALATED', 'WAITING_FOR_PART', 'received', 'feedback_received'], default: 'CREATED' },
+  status: { type: String, enum: ['CREATED', 'CLASSIFIED', 'ROUTED', 'ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'VERIFICATION_PENDING', 'VERIFIED', 'CANCELLED', 'REJECTED', 'ESCALATED', 'WAITING_FOR_PART', 'received', 'feedback_received'], default: 'CREATED' },
   completion_note: { type: String },
   guest_feedback: { type: String },
   guest_rating: { type: Number, min: 1, max: 5 },

@@ -8,7 +8,7 @@ export function CouncilAndApproval() {
   const [decisionProcessing, setDecisionProcessing] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/v1/decision-council', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },  method: 'POST'  })
+    fetch('/api/v1/decision-council', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },  method: 'POST'  })
       .then((res) => res.text())
       .then((text) => {
         try {
@@ -52,7 +52,7 @@ export function CouncilAndApproval() {
   const handleGeneratePlan = async () => {
     setDecisionProcessing(true);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/generate-plan', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },  method: 'POST'  });
+      const res = await fetch('/api/v1/generate-plan', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },  method: 'POST'  });
       const text = await res.text();
       try {
         const json = JSON.parse(text);
@@ -82,7 +82,7 @@ export function CouncilAndApproval() {
   const handleApprove = async (decision: string) => {
     setDecisionProcessing(true);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/approve-plan', {
+      const res = await fetch('/api/v1/approve-plan', {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
