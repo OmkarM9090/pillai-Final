@@ -19,6 +19,7 @@ export default function Navbar() {
     executive: [
       { name: 'Command Center', path: '/dashboard' },
       { name: 'Time Machine', path: '/time-machine' },
+      { name: 'Live Intel', path: '/world-intel' },
       { name: 'Safe Envelope', path: '/safe-envelope' },
       { name: 'Decision Council', path: '/council' },
       { name: 'Review & Kanban', path: '/reviews' },

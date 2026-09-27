@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Landing from './pages/Landing';
 import { ThemeProvider } from './ThemeContext';
+import { WorldIntel } from './pages/WorldIntel';
 
 const MANAGER_ROLES = ['MANAGER', 'GENERAL_MANAGER', 'SUPER_ADMIN'];
 const SUPERVISOR_ROLES = [...MANAGER_ROLES, 'SUPERVISOR', 'VENDOR_MANAGER'];
@@ -35,6 +36,7 @@ export default function App() {
                 
                 <Route path="/dashboard" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><DashboardPage /></ProtectedRoute>} />
                 <Route path="/time-machine" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><TimeMachine /></ProtectedRoute>} />
+                <Route path="/world-intel" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><WorldIntel /></ProtectedRoute>} />
                 <Route path="/safe-envelope" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><SafeEnvelope /></ProtectedRoute>} />
                 <Route path="/council" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><CouncilAndApproval /></ProtectedRoute>} />
                 <Route path="/reviews" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><ReviewAndKanban /></ProtectedRoute>} />
