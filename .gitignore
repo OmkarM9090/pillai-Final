@@ -33,3 +33,9 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 .localdb/
+
+# Python / ML server
+ml-server/venv/
+ml-server/**/__pycache__/
+__pycache__/
+*.pyc

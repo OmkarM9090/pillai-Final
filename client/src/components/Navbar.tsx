@@ -23,6 +23,7 @@ export default function Navbar() {
       { name: 'Decision Council', path: '/council' },
       { name: 'Review & Kanban', path: '/reviews' },
       { name: 'Systemic Incidents', path: '/incidents' },
+      { name: 'Staff Roster', path: '/roster' },
     ],
     guest: [
       { name: 'Guest Portal', path: '/guest' }
@@ -30,15 +31,11 @@ export default function Navbar() {
     worker: [
       { name: 'My Tasks', path: '/worker' }
     ],
-    vendor: [
-      { name: 'Vendor Portal', path: '/vendor' }
-    ]
   };
 
   let currentNav = navItems.executive;
   if (currentUser.role === 'GUEST') currentNav = navItems.guest;
   else if (currentUser.role === 'WORKER') currentNav = navItems.worker;
-  else if (currentUser.role === 'VENDOR_MANAGER') currentNav = navItems.vendor;
 
   const handleReset = async () => {
     try {

@@ -32,8 +32,8 @@ class ModelStore:
             self.ticket_urgency_model = self._load("ticket_urgency_model.joblib")
             
             # Load preprocessing artifacts if they exist
-            self.tfidf_vectorizer = self._load("tfidf_vectorizer.joblib")
-            self.scaler = self._load("scaler.joblib")
+            self.tfidf_vectorizer = self._load("sentiment_tfidf_vectorizer.joblib")
+            self.scaler = self._load("guest_segmentation_scaler.joblib")
             
             self._loaded = True
             print("✅ All models loaded successfully!")

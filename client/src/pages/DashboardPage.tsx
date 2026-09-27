@@ -41,7 +41,7 @@ export function DashboardPage() {
       ]);
 
       if (dashJson.success) setDashboardData(dashJson.data);
-      if (acJson.success) setActionCards(acJson.data.filter((c: any) => c.status !== 'APPROVED'));
+      if (acJson.success) setActionCards(acJson.data.filter((c: any) => c.approval_status !== 'approved' && c.approval_status !== 'rejected'));
       if (incJson.success) setIncidents(incJson.data);
       if (auditJson.success) setAuditLogs(auditJson.data);
       if (staffJson.success) setStaffList(staffJson.data);
@@ -115,7 +115,7 @@ export function DashboardPage() {
     );
   }
 
-  const { health, departmentPressure, autonomyDistribution, staffWorkload, potentialClusters } = dashboardData;
+  const { health, pressure: departmentPressure, autonomyDistribution, staffWorkload, potentialClusters } = dashboardData;
   const needsDecision = actionCards.filter(c => c.autonomy_level === 'MANAGER' || c.autonomy_level === 'CRITICAL' || c.approval_required);
   const criticalIncidentsList = incidents.filter(i => String(i.priority).toUpperCase() === 'CRITICAL' && i.status !== 'completed' && i.status !== 'ACKNOWLEDGED');
   const unresolvedTasks = needsDecision.filter(c => c.title?.includes('ESCALATION') || c.trigger?.includes('Unresolved') || c.title?.includes('Systemic Resolution'));

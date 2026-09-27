@@ -37,7 +37,7 @@ class StaffOptimizer:
             "department_needs": needs,
             "roster": roster,
             "summary": {
-                "total_assigned": sum(len(r["staff"]) for r in roster.values() for r in [roster[k] for k in roster] if isinstance(r, dict)),
+                "total_assigned": sum(len(shift_list) for dept_data in roster.values() for shift_list in dept_data.values()),
                 "total_shifts": sum(sum(len(s) for s in dept_data.values()) if isinstance(dept_data, dict) else 0 for dept_data in roster.values()),
                 "estimated_cost": self._calculate_cost(roster),
                 "coverage_score": self._calculate_coverage(roster, needs)
@@ -99,16 +99,16 @@ class StaffOptimizer:
         
         staff = []
         for i in range(min(count, len(names))):
-            primary = np.random.choice(list(skills_map.keys()), p=list(skills_map.values()))
-            secondary = np.random.choice([s for s in skills_map.keys() if s != primary])
+            primary = str(np.random.choice(list(skills_map.keys()), p=list(skills_map.values())))
+            secondary = str(np.random.choice([s for s in skills_map.keys() if s != primary]))
             staff.append({
                 "id": f"STAFF-{i+1:03d}",
                 "name": names[i],
                 "primary_skill": primary,
                 "secondary_skill": secondary,
                 "max_hours": 8,
-                "cost_per_hour": np.random.choice([150, 175, 200, 225]),
-                "preference": np.random.choice(["morning", "afternoon", "night"], p=[0.5, 0.3, 0.2])
+                "cost_per_hour": int(np.random.choice([150, 175, 200, 225])),
+                "preference": str(np.random.choice(["morning", "afternoon", "night"], p=[0.5, 0.3, 0.2]))
             })
         
         return staff

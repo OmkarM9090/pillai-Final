@@ -9,7 +9,7 @@
     "start": "node dist/server.js",
     "seed": "ts-node --transpile-only src/seed.ts",
     "type-check": "tsc --noEmit",
-    "db:local": "easydb-server --adapter sqlite --data .localdb --port 27017",
+    "db:local": "easydb-server --adapter memory --port 27017",
     "seed:resort": "ts-node --transpile-only src/scripts/seedResort.ts",
     "seed:all": "npm run seed:resort && npm run seed"
   },
@@ -30,7 +30,6 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^26.6.3",
-    "better-sqlite3": "^13.0.3",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"

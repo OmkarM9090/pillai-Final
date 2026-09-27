@@ -6,6 +6,7 @@ import { OperationalTicket } from '../models/OperationalTicket';
 import { AuditLog } from '../models/AuditLog';
 import { Room } from '../models/Room';
 import { classifyRequest } from '../services/autonomyService';
+import { MLService } from '../services/mlClient';
 import { spawn } from 'child_process';
 import { Booking } from '../models/Booking';
 import { PantryInventory } from '../models/PantryInventory';
@@ -141,7 +142,7 @@ export const getDecisionCouncil = async (req: Request, res: Response) => {
 
 export const generateActionCard = async (req: Request, res: Response) => {
   try {
-    const { strategies, bottleneck, scenario } = req.body;
+    const { strategies, bottleneck, scenario } = req.body || {};
       let actualStrategies = strategies;
       let actualBottleneck = bottleneck || 'Housekeeping';
       let actualScenario = scenario || { occupancy_pct: 95, weather_severity: 0, staff_availability: 1.0 };
@@ -301,7 +302,7 @@ export const parseReview = async (req: Request, res: Response) => {
   try {
     const { review_text, room_number } = req.body;
     const classification = classifyRequest(review_text);
-    
+
     // Map classification priority (LOW/MEDIUM/HIGH/CRITICAL) to ticket enum (Low/Medium/High/Critical)
     const ticketPriorityMap: Record<string, string> = {
       LOW: 'Medium', // reviews always warrant at least Medium attention
@@ -310,24 +311,48 @@ export const parseReview = async (req: Request, res: Response) => {
       CRITICAL: 'Critical',
     };
 
-    const ticket = await OperationalTicket.create({
-      title: `Review Alert: ${classification.intent}`,
-      department: classification.department,
-      priority: ticketPriorityMap[classification.priority] ?? 'Medium',
-      source: 'review',
-      room_number: room_number,
-      evidence_terms: [classification.intent],
-      is_systemic: false
-    });
+    // Real ABSA: try the trained ML core (TF-IDF+LogReg sentiment, keyword-evidence issue detection).
+    // Falls back to the deterministic keyword classifier if the ML core is unreachable (demo-safe).
+    let sentiment = 'NEGATIVE';
+    let evidenceTerms: string[] = [classification.intent];
+    let mlSource = 'fallback_classifier';
+    try {
+      const mlResult = await MLService.analyzeReview({ review_text, room_number });
+      if (mlResult) {
+        sentiment = String(mlResult.sentiment || 'negative').toUpperCase();
+        const issueEvidence = (mlResult.issues || []).flatMap((i: any) => i.evidence || []);
+        evidenceTerms = issueEvidence.length > 0 ? Array.from(new Set(issueEvidence)) : [classification.intent];
+        mlSource = mlResult.sentiment_source || 'ml_model';
+      }
+    } catch (mlErr) {
+      // ML core unavailable — keep deterministic fallback above, don't fail the request
+    }
+
+    // Only dispatch a facilities work order for actionable (negative) feedback —
+    // a positive/neutral review shouldn't spawn a maintenance/housekeeping ticket.
+    let ticket = null;
+    if (sentiment === 'NEGATIVE') {
+      ticket = await OperationalTicket.create({
+        title: `Review Alert: ${classification.intent}`,
+        department: classification.department,
+        priority: ticketPriorityMap[classification.priority] ?? 'Medium',
+        source: 'review',
+        room_number: room_number,
+        evidence_terms: evidenceTerms,
+        is_systemic: false
+      });
+    }
 
     res.json({
       success: true,
       data: {
         aspect: classification.intent,
-        sentiment: 'NEGATIVE',
+        sentiment,
+        sentiment_source: mlSource,
         department: classification.department,
-        evidence_terms: [classification.intent],
-        ticket
+        evidence_terms: evidenceTerms,
+        ticket,
+        ticket_created: !!ticket
       }
     });
   } catch (error) {

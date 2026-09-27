@@ -16,6 +16,7 @@ class ReviewInput(BaseModel):
 class ReviewAnalysis(BaseModel):
     sentiment: str
     sentiment_score: float
+    sentiment_source: str = "rule_based"
     aspects: List[dict]
     issues: List[dict]
     auto_tickets: List[dict]
@@ -30,8 +31,8 @@ async def analyze_review(review: ReviewInput):
     
     text = review.review_text.lower()
     
-    # --- Sentiment Analysis ---
-    sentiment, score = _analyze_sentiment(text)
+    # --- Sentiment Analysis (rule-based, with trained LogisticRegression+TF-IDF model as tie-breaker) ---
+    sentiment, score, source = _analyze_sentiment(text)
     
     # --- Aspect-Based Analysis (ABSA) ---
     aspects = _extract_aspects(text)
@@ -48,6 +49,7 @@ async def analyze_review(review: ReviewInput):
     return ReviewAnalysis(
         sentiment=sentiment,
         sentiment_score=score,
+        sentiment_source=source,
         aspects=aspects,
         issues=issues,
         auto_tickets=tickets,
@@ -60,7 +62,7 @@ async def analyze_bulk_reviews(data: BulkReviewInput):
     results = []
     for review in data.reviews:
         text = review.review_text.lower()
-        sentiment, score = _analyze_sentiment(text)
+        sentiment, score, _source = _analyze_sentiment(text)
         aspects = _extract_aspects(text)
         issues = _detect_issues(text, review.room_number)
         tickets = _generate_tickets(issues, review.guest_name, review.room_number)
@@ -124,8 +126,23 @@ async def get_sample_reviews():
 
 # --- Helper Functions ---
 
+def _ml_sentiment(text):
+    """Real trained model inference: TF-IDF + Logistic Regression, trained on labeled review sentiment data"""
+    if model_store.sentiment_model is None or model_store.tfidf_vectorizer is None:
+        return None, None
+    try:
+        X = model_store.tfidf_vectorizer.transform([text])
+        probs = model_store.sentiment_model.predict_proba(X)[0]
+        classes = model_store.sentiment_model.classes_
+        idx = int(probs.argmax())
+        return str(classes[idx]), round(float(probs[idx]), 2)
+    except Exception:
+        return None, None
+
+
 def _analyze_sentiment(text):
-    """Rule-based + model fallback sentiment analysis"""
+    """Keyword evidence extraction (primary, explainable) with trained ML model
+    (TF-IDF + Logistic Regression) as a tie-breaker for ambiguous/neutral text."""
     positive_words = ["amazing", "beautiful", "excellent", "great", "perfect", "wonderful", 
                       "delicious", "friendly", "clean", "comfortable", "heavenly", "best",
                       "loved", "fantastic", "superb", "outstanding"]
@@ -137,15 +154,19 @@ def _analyze_sentiment(text):
     neg_count = sum(1 for w in negative_words if w in text)
     
     if pos_count > neg_count + 1:
-        return "positive", round(0.7 + min(0.3, pos_count * 0.05), 2)
+        return "positive", round(0.7 + min(0.3, pos_count * 0.05), 2), "rule_based"
     elif neg_count > pos_count + 1:
-        return "negative", round(0.3 - min(0.2, neg_count * 0.03), 2)
+        return "negative", round(0.3 - min(0.2, neg_count * 0.03), 2), "rule_based"
     elif neg_count > pos_count:
-        return "negative", round(0.35, 2)
+        return "negative", round(0.35, 2), "rule_based"
     elif pos_count > neg_count:
-        return "positive", round(0.65, 2)
+        return "positive", round(0.65, 2), "rule_based"
     else:
-        return "neutral", 0.50
+        # No decisive keyword evidence either way — defer to the trained ML model
+        ml_label, ml_conf = _ml_sentiment(text)
+        if ml_label:
+            return ml_label, ml_conf, "ml_model"
+        return "neutral", 0.50, "rule_based"
 
 def _extract_aspects(text):
     aspect_keywords = {

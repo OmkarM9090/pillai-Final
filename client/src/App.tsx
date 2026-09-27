@@ -8,13 +8,14 @@ import { ReviewAndKanban } from './pages/ReviewAndKanban';
 import { GuestPortal } from './pages/GuestPortal';
 import { WorkerPortal } from './pages/WorkerPortal';
 import { IncidentsAndReallocation } from './pages/IncidentsAndReallocation';
+import { RosterPlanner } from './pages/RosterPlanner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 
 const MANAGER_ROLES = ['MANAGER', 'GENERAL_MANAGER', 'SUPER_ADMIN'];
-const SUPERVISOR_ROLES = [...MANAGER_ROLES, 'SUPERVISOR'];
+const SUPERVISOR_ROLES = [...MANAGER_ROLES, 'SUPERVISOR', 'VENDOR_MANAGER'];
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
                 <Route path="/council" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><CouncilAndApproval /></ProtectedRoute>} />
                 <Route path="/reviews" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><ReviewAndKanban /></ProtectedRoute>} />
                 <Route path="/incidents" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><IncidentsAndReallocation /></ProtectedRoute>} />
+                <Route path="/roster" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><RosterPlanner /></ProtectedRoute>} />
                 
                 <Route path="/guest" element={<ProtectedRoute allowedRoles={['GUEST']}><GuestPortal /></ProtectedRoute>} />
                 

@@ -38,7 +38,6 @@ export default function Login() {
         const role = data.data.user.role;
         if (role === 'GUEST') navigate('/guest');
         else if (role === 'WORKER') navigate('/worker');
-        else if (role === 'VENDOR_MANAGER') navigate('/vendor');
         else navigate('/dashboard');
       } else {
         throw new Error('Invalid response from server');
