@@ -12,22 +12,25 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
+import Landing from './pages/Landing';
+import { ThemeProvider } from './ThemeContext';
 
 const MANAGER_ROLES = ['MANAGER', 'GENERAL_MANAGER', 'SUPER_ADMIN'];
 const SUPERVISOR_ROLES = [...MANAGER_ROLES, 'SUPERVISOR'];
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <BrowserRouter>
+    <ThemeProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <BrowserRouter>
           <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
             <Navbar />
             <main className="pb-12">
               <Routes>
                 <Route path="/login" element={<Login />} />
                 
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/" element={<Landing />} />
                 
                 <Route path="/dashboard" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><DashboardPage /></ProtectedRoute>} />
                 <Route path="/time-machine" element={<ProtectedRoute allowedRoles={SUPERVISOR_ROLES}><TimeMachine /></ProtectedRoute>} />
@@ -48,5 +51,6 @@ export default function App() {
         </BrowserRouter>
       </AuthProvider>
     </ErrorBoundary>
+    </ThemeProvider>
   );
 }

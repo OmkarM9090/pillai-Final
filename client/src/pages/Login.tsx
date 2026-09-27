@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { motion } from 'framer-motion';
+import { BoxSelect, Mail, Lock, ArrowLeft, LogIn } from 'lucide-react';
+import useIsMobile from '../hooks/useIsMobile';
 
 export default function Login() {
+  const isMobile = useIsMobile();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -50,86 +53,142 @@ export default function Login() {
     }
   };
 
+  const inputStyle = {
+    width: '100%',
+    padding: '0.85rem 1rem 0.85rem 2.6rem',
+    borderRadius: '0.85rem',
+    border: '1px solid var(--border-color)',
+    background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
+    fontSize: '0.92rem',
+    outline: 'none',
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-white tracking-tight">
-            SMART RESORT <span className="text-indigo-500">360</span>
-          </h1>
-          <p className="text-slate-400 text-sm mt-2">Sign in to your account</p>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--bg-primary)',
+        padding: isMobile ? '6rem 1.25rem 2rem' : '2rem',
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        style={{
+          width: '100%',
+          maxWidth: '400px',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--card-border)',
+          borderRadius: '1.5rem',
+          boxShadow: 'var(--card-shadow)',
+          padding: isMobile ? '2rem 1.5rem' : '2.75rem 2.5rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.75rem' }}>
+          <div
+            style={{
+              width: '2.25rem', height: '2.25rem', borderRadius: '0.7rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--accent)', flexShrink: 0,
+            }}
+          >
+            <BoxSelect size={16} color="var(--on-accent)" />
+          </div>
+          <span className="font-display" style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            ResortSandbox 360
+          </span>
         </div>
 
+        <h1 className="font-display" style={{ fontSize: 'clamp(1.5rem, 3vw, 1.85rem)', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.4rem', letterSpacing: '-0.02em' }}>
+          Manager sign in
+        </h1>
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: 1.5 }}>
+          Access the dashboard to review simulations, rosters and prescriptive actions.
+        </p>
+
         {error && (
-          <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-3 mb-6 flex items-center">
-            <span className="text-rose-400 text-sm font-semibold">{error}</span>
+          <div style={{ background: 'rgba(244, 63, 94, 0.1)', border: '1px solid rgba(244, 63, 94, 0.2)', borderRadius: '0.5rem', padding: '0.75rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center' }}>
+            <span style={{ color: 'rgb(251, 113, 133)', fontSize: '0.875rem', fontWeight: 600 }}>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-              Email Address
-            </label>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ position: 'relative' }}>
+            <Mail size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="email"
+              placeholder="Work email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
-              placeholder="Enter your email"
+              style={inputStyle}
+            />
+          </div>
+          <div style={{ position: 'relative' }}>
+            <Lock size={16} style={{ position: 'absolute', left: '0.9rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={inputStyle}
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
-                placeholder="••••••••"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-semibold"
-              >
-                {showPassword ? 'HIDE' : 'SHOW'}
-              </button>
-            </div>
-          </div>
-
-          <button
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isLoading}
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+              marginTop: '0.5rem', padding: '0.85rem 1rem', borderRadius: '0.85rem', border: 'none',
+              background: 'var(--accent)', color: 'var(--on-accent)', fontSize: '0.92rem', fontWeight: 700,
+              cursor: isLoading ? 'not-allowed' : 'pointer', opacity: isLoading ? 0.7 : 1
+            }}
           >
             {isLoading ? (
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             ) : (
-              'SIGN IN'
+              <>
+                <LogIn size={16} />
+                Sign in
+              </>
             )}
-          </button>
+          </motion.button>
         </form>
 
-        <div className="mt-8 text-center">
-          <p className="text-xs text-slate-500 font-semibold mb-2">DEMO CREDENTIALS</p>
-          <div className="flex flex-wrap gap-2 justify-center text-[10px] text-slate-400">
-            <span className="bg-slate-800 px-2 py-1 rounded">manager@smartresort.demo</span>
-            <span className="bg-slate-800 px-2 py-1 rounded">housekeeper@smartresort.demo</span>
-            <span className="bg-slate-800 px-2 py-1 rounded">guest@smartresort.demo</span>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '1.75rem',
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)',
+          }}
+        >
+          <ArrowLeft size={14} />
+          Back to home
+        </button>
+
+        <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '0.5rem' }}>DEMO CREDENTIALS</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', fontSize: '0.625rem', color: 'var(--text-muted)' }}>
+            <span style={{ background: 'var(--bg-secondary)', padding: '0.25rem 0.5rem', borderRadius: '0.25rem' }}>manager@smartresort.demo</span>
+            <span style={{ background: 'var(--bg-secondary)', padding: '0.25rem 0.5rem', borderRadius: '0.25rem' }}>housekeeper@smartresort.demo</span>
+            <span style={{ background: 'var(--bg-secondary)', padding: '0.25rem 0.5rem', borderRadius: '0.25rem' }}>guest@smartresort.demo</span>
           </div>
-          <p className="text-xs text-slate-500 mt-2">Password: <span className="font-mono">demo123</span></p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Password: <span style={{ fontFamily: 'monospace' }}>demo123</span></p>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
