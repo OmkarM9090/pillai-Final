@@ -6,7 +6,7 @@ export function SafeEnvelope() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/v1/safe-envelope', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },  method: 'POST'  })
+    fetch('/api/v1/safe-envelope', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },  method: 'POST'  })
       .then((res) => res.text())
       .then((text) => {
         try {

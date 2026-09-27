@@ -43,7 +43,7 @@ export default function Navbar() {
   const handleReset = async () => {
     try {
       // Use dev token or just fire and forget if API is unprotected
-      await fetch('http://localhost:5000/api/v1/reset-demo', { 
+      await fetch('/api/v1/reset-demo', { 
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } 
       });

@@ -13,7 +13,7 @@ export function WorkerPortal() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/worker-tasks/${encodeURIComponent(currentStaff)}`, { 
+      const res = await fetch(`/api/v1/worker-tasks/${encodeURIComponent(currentStaff)}`, { 
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } 
       });
       const json = await res.json();
@@ -51,7 +51,7 @@ export function WorkerPortal() {
         body = { reason: blockNotes[taskId] || 'Other' };
       }
 
-      await fetch(`http://localhost:5000/api/v1/worker-tasks/${taskId}/${action}`, {
+      await fetch(`/api/v1/worker-tasks/${taskId}/${action}`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

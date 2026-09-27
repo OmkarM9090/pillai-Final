@@ -15,7 +15,7 @@ export function IncidentsAndReallocation() {
   const runClusterAnalysis = async () => {
     setLoadingClusters(true);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/cluster-complaints', {
+      const res = await fetch('/api/v1/cluster-complaints', {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ time_window_hours: 2 }),
@@ -35,7 +35,7 @@ export function IncidentsAndReallocation() {
   const runReallocation = async () => {
     setLoadingReallocation(true);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/reallocate-room', {
+      const res = await fetch('/api/v1/reallocate-room', {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ guest_name: guestName, current_room: currentRoom, reason }),

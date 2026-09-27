@@ -28,12 +28,12 @@ export function DashboardPage() {
       const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
       
       const [dashRes, acRes, incRes, auditRes, staffRes, safeRes] = await Promise.all([
-        fetch('http://localhost:5000/api/v1/dashboard', { headers }),
-        fetch('http://localhost:5000/api/v1/action-cards', { headers }),
-        fetch('http://localhost:5000/api/v1/tickets', { headers }),
-        fetch('http://localhost:5000/api/v1/audit-logs', { headers }),
-        fetch('http://localhost:5000/api/v1/staff', { headers }),
-        fetch('http://localhost:5000/api/v1/safe-envelope', { method: 'POST', headers })
+        fetch('/api/v1/dashboard', { headers }),
+        fetch('/api/v1/action-cards', { headers }),
+        fetch('/api/v1/tickets', { headers }),
+        fetch('/api/v1/audit-logs', { headers }),
+        fetch('/api/v1/staff', { headers }),
+        fetch('/api/v1/safe-envelope', { method: 'POST', headers })
       ]);
 
       const [dashJson, acJson, incJson, auditJson, staffJson, safeJson] = await Promise.all([
@@ -63,7 +63,7 @@ export function DashboardPage() {
 
   const handleActionCard = async (cardId: string, decision: string, payload: any = {}) => {
     try {
-      await fetch('http://localhost:5000/api/v1/approve-plan', {
+      await fetch('/api/v1/approve-plan', {
         method: 'POST',
         headers: { 
           Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -80,7 +80,7 @@ export function DashboardPage() {
 
   const acknowledgeIncident = async (id: string) => {
     try {
-      await fetch(`http://localhost:5000/api/v1/tickets/${id}/acknowledge`, {
+      await fetch(`/api/v1/tickets/${id}/acknowledge`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
@@ -93,7 +93,7 @@ export function DashboardPage() {
   const createMasterWorkOrder = async () => {
     setCreatingMasterTicket(true);
     try {
-      await fetch('http://localhost:5000/api/v1/cluster-complaints', {
+      await fetch('/api/v1/cluster-complaints', {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ time_window_hours: 4 })
@@ -117,7 +117,7 @@ export function DashboardPage() {
 
   const { health, departmentPressure, autonomyDistribution, staffWorkload, potentialClusters } = dashboardData;
   const needsDecision = actionCards.filter(c => c.autonomy_level === 'MANAGER' || c.autonomy_level === 'CRITICAL' || c.approval_required);
-  const criticalIncidentsList = incidents.filter(i => i.priority === 'CRITICAL' && i.status !== 'completed');
+  const criticalIncidentsList = incidents.filter(i => String(i.priority).toUpperCase() === 'CRITICAL' && i.status !== 'completed' && i.status !== 'ACKNOWLEDGED');
   const unresolvedTasks = needsDecision.filter(c => c.title?.includes('ESCALATION') || c.trigger?.includes('Unresolved') || c.title?.includes('Systemic Resolution'));
   const regularDecisions = needsDecision.filter(c => !c.title?.includes('ESCALATION') && !c.trigger?.includes('Unresolved') && !c.title?.includes('Systemic Resolution'));
 

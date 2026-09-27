@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentUser(JSON.parse(savedUser));
         
         // Optionally fetch fresh user info from /api/v1/auth/me here
-        fetch('http://localhost:5000/api/v1/auth/me', {
+        fetch('/api/v1/auth/me', {
           headers: { Authorization: `Bearer ${savedToken}` }
         })
         .then(res => {

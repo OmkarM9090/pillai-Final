@@ -29,7 +29,7 @@ export function TimeMachine() {
     setIsError(false);
     setActionPlanStatus(null);
     try {
-      const res = await fetch('http://localhost:5000/api/v1/simulate', {
+      const res = await fetch('/api/v1/simulate', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -67,7 +67,7 @@ export function TimeMachine() {
     if (!results) return;
     setActionPlanStatus('Creating plan...');
     try {
-      const res = await fetch('http://localhost:5000/api/v1/generate-plan', {
+      const res = await fetch('/api/v1/generate-plan', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

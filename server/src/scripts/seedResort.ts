@@ -188,17 +188,17 @@ async function seed() {
     const req1 = await GuestRequest.create({
       guest_name: 'Guest 105', room_number: '105', request_text: 'I need an extra towel please',
       intent: 'TOWEL', priority: 'LOW', autonomy_level: 'AUTO', department: 'housekeeping',
-      status: 'assigned', assigned_staff: staffMembers[1].name
+      status: 'ASSIGNED', assigned_staff: staffMembers[1].name
     });
     const req2 = await GuestRequest.create({
       guest_name: 'Guest 204', room_number: '204', request_text: 'The AC in my room is making a terrible noise',
       intent: 'AC', priority: 'MEDIUM', autonomy_level: 'SUPERVISOR', department: 'maintenance',
-      status: 'classified'
+      status: 'CLASSIFIED'
     });
     const req3 = await GuestRequest.create({
       guest_name: 'Guest 112', room_number: '112', request_text: 'Can I get two more pillows?',
       intent: 'PILLOW', priority: 'LOW', autonomy_level: 'AUTO', department: 'housekeeping',
-      status: 'assigned', assigned_staff: staffMembers[2].name
+      status: 'ASSIGNED', assigned_staff: staffMembers[2].name
     });
 
     staffMembers[1].task_status = 'assigned';
@@ -243,7 +243,7 @@ async function seed() {
         passwordHash: defaultPassword,
         role: ROLES.WORKER,
         department: 'Housekeeping',
-        staffId: savedStaffRoster.find(s => s.department === 'Housekeeping')?._id,
+        staffId: savedStaffRoster.find(s => s.department === 'housekeeping')?._id,
         isActive: true,
       },
       {
@@ -252,7 +252,7 @@ async function seed() {
         passwordHash: defaultPassword,
         role: ROLES.WORKER,
         department: 'Maintenance',
-        staffId: savedStaffRoster.find(s => s.department === 'Maintenance')?._id,
+        staffId: savedStaffRoster.find(s => s.department === 'maintenance')?._id,
         isActive: true,
       },
       {

@@ -12,6 +12,7 @@ import { PantryInventory } from '../models/PantryInventory';
 import { MaintenanceAsset } from '../models/MaintenanceAsset';
 import { WorldSignal } from '../models/WorldSignal';
 import mongoose from 'mongoose';
+import { dateGte } from '../utils/dbCompat';
 
 import { getCommandCenterState } from '../services/ai/commandCenterService';
 
@@ -78,9 +79,15 @@ export const getSafeEnvelope = async (req: Request, res: Response) => {
         bottleneck_department: baseSim.primaryBottleneck.name,
         limiting_factor: `Capacity limit reached for ${baseSim.primaryBottleneck.name} (${baseSim.primaryBottleneck.pressure}%)`,
         constraints: baseSim.pressures.map((p: any) => ({
+          name: p.name,
+          description: p.gap > 0 ? `Gap of ${p.gap} units` : 'Stable',
+          severity: p.pressure > 100 ? 100 : p.pressure,
+          impact: p.pressure > 90 ? 'High' : p.pressure > 70 ? 'Medium' : 'Low',
+          mitigation: p.gap > 0 ? `Requires ${p.gap} additional units` : 'None required',
+          // Fields consumed by the Safe Envelope page
           department: p.name,
-          ceiling: p.pressure > 100 ? 100 : p.pressure,
-          limit_factor: p.gap > 0 ? `Capacity Gap of ${p.gap} units` : 'Stable'
+          ceiling: Math.min(100, Math.max(0, Math.round((currentOccupancy * 100) / Math.max(p.pressure, 1)))),
+          limit_factor: p.gap > 0 ? `Gap of ${p.gap} units — requires ${p.gap} additional capacity` : 'Operating within safe capacity'
         })),
         unlock_actions: baseSim.strategies.map((s: any) => ({
           action: s.name,
@@ -146,7 +153,7 @@ export const generateActionCard = async (req: Request, res: Response) => {
       }
 
     const actionCard = await ActionCard.create({
-      title: `Simulation Plan: Address ${bottleneck} constraint`,
+      title: `Simulation Plan: Address ${actualBottleneck} constraint`,
       affected_departments: [actualBottleneck.toLowerCase()],
       trigger: 'Simulation Output',
       evidence: [`Occupancy at ${actualScenario.occupancy_pct}%`, `Weather Severity ${actualScenario.weather_severity}`, `Staff Avail ${actualScenario.staff_availability}`],
@@ -169,8 +176,12 @@ export const generateActionCard = async (req: Request, res: Response) => {
 export const approvePlan = async (req: Request, res: Response) => {
   try {
     const { actionCardId, action_id, decision, reason, modifications } = req.body;
-      const actualId = actionCardId || action_id;
-    let card = await ActionCard.findOne({ $or: [{ action_id: actionCardId }, { _id: actionCardId }] });
+    const actualId = actionCardId || action_id;
+    const idConditions: Record<string, unknown>[] = [{ action_id: actualId }];
+    if (mongoose.isValidObjectId(actualId)) {
+      idConditions.push({ _id: actualId });
+    }
+    let card = await ActionCard.findOne({ $or: idConditions });
 
     if (!card) {
       return res.status(404).json({ success: false, message: 'ActionCard not found' });
@@ -291,10 +302,18 @@ export const parseReview = async (req: Request, res: Response) => {
     const { review_text, room_number } = req.body;
     const classification = classifyRequest(review_text);
     
+    // Map classification priority (LOW/MEDIUM/HIGH/CRITICAL) to ticket enum (Low/Medium/High/Critical)
+    const ticketPriorityMap: Record<string, string> = {
+      LOW: 'Medium', // reviews always warrant at least Medium attention
+      MEDIUM: 'Medium',
+      HIGH: 'High',
+      CRITICAL: 'Critical',
+    };
+
     const ticket = await OperationalTicket.create({
       title: `Review Alert: ${classification.intent}`,
       department: classification.department,
-      priority: classification.priority === 'LOW' ? 'Medium' : classification.priority,
+      priority: ticketPriorityMap[classification.priority] ?? 'Medium',
       source: 'review',
       room_number: room_number,
       evidence_terms: [classification.intent],
@@ -448,7 +467,8 @@ export const acceptWorkerTask = async (req: Request, res: Response) => {
     if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
     if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
 
-    reqDoc.status = 'ACCEPTED';
+    // OperationalTickets use lowercase statuses; GuestRequests use uppercase
+    reqDoc.status = reqDoc.ticket_id ? 'in_progress' : 'ACCEPTED';
     await reqDoc.save();
 
     if (reqDoc.assigned_staff || reqDoc.assigned_to) {
@@ -487,10 +507,10 @@ export const rejectWorkerTask = async (req: Request, res: Response) => {
     if (availableStaff) {
       if (reqDoc.assigned_staff !== undefined) reqDoc.assigned_staff = availableStaff.name;
       if (reqDoc.assigned_to !== undefined) reqDoc.assigned_to = availableStaff.name;
-      reqDoc.status = 'ASSIGNED';
+      reqDoc.status = reqDoc.ticket_id ? 'todo' : 'ASSIGNED';
       await StaffRoster.updateOne({ name: availableStaff.name }, { task_status: 'busy' });
     } else {
-      reqDoc.status = 'REJECTED';
+      reqDoc.status = reqDoc.ticket_id ? 'blocked' : 'REJECTED';
       reqDoc.rejection_reason = reason;
       // Escalate to manager queue by making it an ActionCard
       await ActionCard.create({
@@ -535,7 +555,7 @@ export const startWorkerTask = async (req: Request, res: Response) => {
     if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
     if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
 
-    reqDoc.status = 'IN_PROGRESS';
+    reqDoc.status = reqDoc.ticket_id ? 'in_progress' : 'IN_PROGRESS';
     await reqDoc.save();
 
     const worker = reqDoc.assigned_staff || reqDoc.assigned_to;
@@ -558,7 +578,7 @@ export const completeWorkerTask = async (req: Request, res: Response) => {
     if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: taskId });
     if (!reqDoc) return res.status(404).json({ success: false, message: 'Task not found' });
 
-    reqDoc.status = 'COMPLETED';
+    reqDoc.status = reqDoc.ticket_id ? 'completed' : 'COMPLETED';
     if (reqDoc.completed_at !== undefined) reqDoc.completed_at = new Date();
     if (reqDoc.completion_note !== undefined) reqDoc.completion_note = completion_note;
     if (reqDoc.resolution_notes !== undefined) reqDoc.resolution_notes = completion_note;
@@ -591,7 +611,7 @@ export const blockWorkerTask = async (req: Request, res: Response) => {
     if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
     if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
 
-    reqDoc.status = 'BLOCKED';
+    reqDoc.status = reqDoc.ticket_id ? 'blocked' : 'BLOCKED';
     await reqDoc.save();
 
     const currentWorker = reqDoc.assigned_staff || reqDoc.assigned_to;
@@ -645,7 +665,9 @@ export const blockWorkerTask = async (req: Request, res: Response) => {
 export const feedbackGuestRequest = async (req: Request, res: Response) => {
   try {
     const requestId = req.params.requestId as string;
-    const { guest_feedback, guest_rating } = req.body;
+    // Accept both naming conventions (client sends feedback/rating)
+    const guest_feedback = req.body.guest_feedback ?? req.body.feedback;
+    const guest_rating = req.body.guest_rating ?? req.body.rating;
     
     const reqDoc = await GuestRequest.findOneAndUpdate(
       { request_id: requestId },
@@ -691,8 +713,8 @@ export const clusterComplaints = async (req: Request, res: Response) => {
     const time_window_hours = req.body.time_window_hours || 2;
     const since = new Date(Date.now() - time_window_hours * 60 * 60 * 1000);
 
-    const guestReqs = await GuestRequest.find({ created_at: { $gte: since } });
-    const tickets = await OperationalTicket.find({ createdAt: { $gte: since } });
+    const guestReqs: any[] = await GuestRequest.collection.find(dateGte('created_at', since) as any).toArray();
+    const tickets: any[] = await OperationalTicket.collection.find(dateGte('createdAt', since) as any).toArray();
     
     const groups: Record<string, any[]> = {};
     for (const req of guestReqs) {
@@ -719,7 +741,7 @@ export const clusterComplaints = async (req: Request, res: Response) => {
         const masterTicket = await OperationalTicket.create({
           title: `Systemic Issue: ${intent} across ${rooms.length} rooms`,
           department: items[0].item.department,
-          priority: 'CRITICAL',
+          priority: 'Critical',
           cluster_id: cluster_id,
           is_systemic: true,
           evidence_terms: [intent]
@@ -754,18 +776,29 @@ export const reallocateRoom = async (req: Request, res: Response) => {
     const currRoom = await Room.findOne({ room_number: current_room });
     if (!currRoom) return res.status(404).json({ success: false, message: 'Room not found' });
 
-    const recommended = await Room.findOne({ type: currRoom.type, status: 'available' });
-    
+    // Prefer same room type; if none available, offer a complimentary upgrade to any available room
+    let recommended = await Room.findOne({ type: currRoom.type, status: 'available' });
+    let isUpgrade = false;
     if (!recommended) {
-      return res.json({ success: false, message: 'No available rooms of this type' });
+      recommended = await Room.findOne({ status: 'available' }).sort({ rate_per_night: 1 });
+      isUpgrade = !!recommended;
     }
+
+    if (!recommended) {
+      return res.json({ success: false, message: 'No available rooms in the resort right now' });
+    }
+
+    const alternatives = await Room.find({
+      status: 'available',
+      room_number: { $ne: recommended.room_number },
+    }).limit(3);
     
     const actionCard = await ActionCard.create({
-      title: `Reallocate ${guest_name} from ${current_room} to ${recommended.room_number}`,
+      title: `Reallocate ${guest_name} from ${current_room} to ${recommended.room_number}${isUpgrade ? ` (complimentary ${recommended.type} upgrade)` : ''}`,
       affected_departments: ['front_desk', 'housekeeping'],
       trigger: reason,
       situation: reason,
-      evidence: [],
+      evidence: isUpgrade ? [`No ${currRoom.type} rooms available — upgrading guest to ${recommended.type}`] : [],
       autonomy_level: 'MANAGER',
       approval_required: true,
       options: [{ label: 'Approve Reallocation', description: 'Moves guest and marks old room for cleaning', impact: 'Guest satisfaction' }]
@@ -774,7 +807,8 @@ export const reallocateRoom = async (req: Request, res: Response) => {
     res.json({
       success: true,
       recommended_room: recommended,
-      alternatives: [],
+      is_upgrade: isUpgrade,
+      alternatives,
       action_card: actionCard
     });
   } catch (error) {
