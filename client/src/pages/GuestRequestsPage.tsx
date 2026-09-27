@@ -19,7 +19,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   CRITICAL: 'bg-rose-500/25 text-rose-300', P0: 'bg-rose-500/25 text-rose-300',
   HIGH: 'bg-rose-500/20 text-rose-400', P1: 'bg-rose-500/20 text-rose-400',
   MEDIUM: 'bg-amber-500/20 text-amber-400', P2: 'bg-amber-500/20 text-amber-400',
-  LOW: 'bg-slate-700 text-slate-300', P3: 'bg-slate-700 text-slate-300', P4: 'bg-slate-700 text-slate-300',
+  LOW: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]', P3: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]', P4: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]',
 };
 
 type ModalState = { type: 'APPROVE' | 'DECLINE' | 'MODIFY' | null; req: any };
@@ -108,7 +108,7 @@ export function GuestRequestsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center text-slate-400">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-[var(--text-secondary)]">
         <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
         <div className="text-sm font-bold tracking-widest uppercase">Loading Guest Requests…</div>
       </div>
@@ -121,13 +121,13 @@ export function GuestRequestsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black text-white tracking-tight">Guests <span className="text-indigo-400">/ Guest Requests</span></h1>
-          <p className="text-slate-400 text-sm mt-1">Every guest request, its live state, owner and manager decision trail.</p>
+          <p className="text-[var(--text-secondary)] text-sm mt-1">Every guest request, its live state, owner and manager decision trail.</p>
         </div>
         <div className="flex items-center gap-2 text-xs">
           <span className="px-3 py-1.5 rounded-lg bg-amber-500/15 text-amber-400 font-bold">{pendingApproval.length + escalated.length} need decision</span>
           <span className="px-3 py-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 font-bold">{active.length} active</span>
           <span className="px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 font-bold">{closed.length} closed</span>
-          <span className="text-slate-500 ml-2">updated {lastUpdated.toLocaleTimeString()} · live</span>
+          <span className="text-[var(--text-muted)] ml-2">updated {lastUpdated.toLocaleTimeString()} · live</span>
         </div>
       </div>
 
@@ -138,18 +138,18 @@ export function GuestRequestsPage() {
       <div className="flex gap-2">
         {['ALL', 'PENDING', 'ACTIVE', 'CLOSED'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition ${filter === f ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition ${filter === f ? 'bg-indigo-600 text-white' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:text-white'}`}>
             {f}
           </button>
         ))}
       </div>
 
       {/* Requests table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-2xl shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="bg-slate-950 text-[10px] uppercase tracking-widest text-slate-500 border-b border-slate-800">
+              <tr className="bg-[var(--bg-primary)] text-[10px] uppercase tracking-widest text-[var(--text-muted)] border-b border-[var(--card-border)]">
                 <th className="p-4 font-bold">Request</th>
                 <th className="p-4 font-bold">Guest / Room</th>
                 <th className="p-4 font-bold">Category</th>
@@ -161,15 +161,15 @@ export function GuestRequestsPage() {
                 <th className="p-4 font-bold text-right">Decision</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-[var(--card-border)]/60">
               {visible.length === 0 && (
-                <tr><td colSpan={9} className="p-10 text-center text-slate-500 italic">No requests in this view.</td></tr>
+                <tr><td colSpan={9} className="p-10 text-center text-[var(--text-muted)] italic">No requests in this view.</td></tr>
               )}
               {visible.map((r: any) => (
-                <tr key={r.request_id} className="hover:bg-slate-800/30 transition align-top">
+                <tr key={r.request_id} className="hover:bg-[var(--bg-secondary)]/30 transition align-top">
                   <td className="p-4 max-w-xs">
                     <div className="font-bold text-white">{r.request_id}</div>
-                    <div className="text-slate-300 text-xs mt-1">{r.request_text}</div>
+                    <div className="text-[var(--text-secondary)] text-xs mt-1">{r.request_text}</div>
                     {r.original_request_text && (
                       <div className="text-[10px] text-amber-400/80 mt-1">Original: “{r.original_request_text}”</div>
                     )}
@@ -183,14 +183,14 @@ export function GuestRequestsPage() {
                   </td>
                   <td className="p-4">
                     <div className="font-bold text-white text-xs">{r.guest_name}</div>
-                    <div className="text-slate-400 text-xs">Room {r.room_number}</div>
+                    <div className="text-[var(--text-secondary)] text-xs">Room {r.room_number}</div>
                   </td>
-                  <td className="p-4 text-xs text-slate-300 uppercase font-bold">{r.intent}</td>
-                  <td className="p-4"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${PRIORITY_COLORS[r.priority] ?? 'bg-slate-700 text-slate-300'}`}>{r.priority}</span></td>
-                  <td className="p-4 text-xs text-slate-300 capitalize">{r.department}</td>
-                  <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${STATUS_COLORS[r.status] ?? 'bg-slate-800 text-slate-300'}`}>{String(r.status).replace('_', ' ')}</span></td>
-                  <td className="p-4 text-xs text-slate-300">{r.assigned_staff || <span className="text-slate-500 italic">unassigned</span>}</td>
-                  <td className="p-4 text-xs text-slate-500 whitespace-nowrap">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                  <td className="p-4 text-xs text-[var(--text-secondary)] uppercase font-bold">{r.intent}</td>
+                  <td className="p-4"><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${PRIORITY_COLORS[r.priority] ?? 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}>{r.priority}</span></td>
+                  <td className="p-4 text-xs text-[var(--text-secondary)] capitalize">{r.department}</td>
+                  <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${STATUS_COLORS[r.status] ?? 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}>{String(r.status).replace('_', ' ')}</span></td>
+                  <td className="p-4 text-xs text-[var(--text-secondary)]">{r.assigned_staff || <span className="text-[var(--text-muted)] italic">unassigned</span>}</td>
+                  <td className="p-4 text-xs text-[var(--text-muted)] whitespace-nowrap">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                   <td className="p-4">
                     {canDecide(r) && (
                       <div className="flex justify-end gap-1.5">
@@ -213,26 +213,26 @@ export function GuestRequestsPage() {
       {/* Feedback + Observations split */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Guest feedback */}
-        <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <section className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-2xl p-6 shadow-xl">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-sm font-black text-white uppercase tracking-widest">Guest Feedback</h2>
-            {avgRating != null && <span className="text-amber-400 font-black text-lg">{avgRating}★ <span className="text-xs text-slate-500 font-bold">avg · {feedback.length}</span></span>}
+            {avgRating != null && <span className="text-amber-400 font-black text-lg">{avgRating}★ <span className="text-xs text-[var(--text-muted)] font-bold">avg · {feedback.length}</span></span>}
           </div>
           <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
             {feedback.length === 0 ? (
-              <div className="text-slate-500 text-sm italic text-center py-8">No feedback yet — it unlocks for guests once a task is completed.</div>
+              <div className="text-[var(--text-muted)] text-sm italic text-center py-8">No feedback yet — it unlocks for guests once a task is completed.</div>
             ) : feedback.map((f: any) => (
-              <div key={f.request_id} className="bg-slate-800/50 border border-slate-700/60 rounded-xl p-4">
+              <div key={f.request_id} className="bg-[var(--accent-soft)] border border-[var(--border-color)] rounded-xl p-4">
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="text-amber-400 font-bold">{'★'.repeat(f.guest_rating)}{'☆'.repeat(5 - f.guest_rating)}</span>
-                    <span className="text-xs text-slate-400 ml-2">Room {f.room_number} · {f.request_id}</span>
+                    <span className="text-xs text-[var(--text-secondary)] ml-2">Room {f.room_number} · {f.request_id}</span>
                   </div>
-                  <span className="text-[10px] text-slate-500">{f.completed_at ? new Date(f.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                  <span className="text-[10px] text-[var(--text-muted)]">{f.completed_at ? new Date(f.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                 </div>
-                <div className="text-sm text-slate-200 mt-2">“{f.guest_feedback || 'No written comment'}”</div>
-                <div className="text-[11px] text-slate-500 mt-2">
-                  Request: {f.request_text} · Staff: <span className="text-slate-300 font-bold">{f.assigned_staff || '—'}</span> · Dept: {f.department}
+                <div className="text-sm text-[var(--text-primary)] mt-2">“{f.guest_feedback || 'No written comment'}”</div>
+                <div className="text-[11px] text-[var(--text-muted)] mt-2">
+                  Request: {f.request_text} · Staff: <span className="text-[var(--text-secondary)] font-bold">{f.assigned_staff || '—'}</span> · Dept: {f.department}
                 </div>
               </div>
             ))}
@@ -240,22 +240,22 @@ export function GuestRequestsPage() {
         </section>
 
         {/* Staff observations */}
-        <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <section className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-2xl p-6 shadow-xl">
           <div className="flex justify-between items-center mb-5">
             <h2 className="text-sm font-black text-white uppercase tracking-widest">Staff On-Site Observations</h2>
             <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded text-xs font-bold">{observations.length}</span>
           </div>
           <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
             {observations.length === 0 ? (
-              <div className="text-slate-500 text-sm italic text-center py-8">No observations logged by staff yet.</div>
+              <div className="text-[var(--text-muted)] text-sm italic text-center py-8">No observations logged by staff yet.</div>
             ) : observations.map((o: any) => (
-              <div key={o.observation_id} className="bg-slate-800/50 border border-slate-700/60 rounded-xl p-4">
+              <div key={o.observation_id} className="bg-[var(--accent-soft)] border border-[var(--border-color)] rounded-xl p-4">
                 <div className="flex justify-between items-start">
                   <span className="text-xs font-bold text-white">{o.staff_name} · Room {o.room_number ?? 'n/a'}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${o.status === 'ROUTED' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-700 text-slate-300'}`}>{o.status}</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${o.status === 'ROUTED' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]'}`}>{o.status}</span>
                 </div>
-                <div className="text-sm text-slate-200 mt-2">“{o.note}”</div>
-                <div className="text-[11px] text-slate-500 mt-2">
+                <div className="text-sm text-[var(--text-primary)] mt-2">“{o.note}”</div>
+                <div className="text-[11px] text-[var(--text-muted)] mt-2">
                   During {o.task_id ?? 'round'} · {new Date(o.createdAt).toLocaleString()}
                   {o.routed_ticket_id && <> → ticket <span className="text-indigo-300 font-bold">{o.routed_ticket_id}</span> ({o.department})</>}
                 </div>
@@ -268,26 +268,26 @@ export function GuestRequestsPage() {
       {/* Decision modal */}
       {modal.type && modal.req && (
         <div className="fixed inset-0 bg-[#0B1120]/80 backdrop-blur-md flex justify-center items-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-black text-white mb-4 uppercase tracking-widest border-b border-slate-800 pb-4">{modal.type} — {modal.req.request_id}</h2>
-            <div className="mb-5 bg-slate-950 border border-slate-800 p-4 rounded-xl text-sm">
-              <div className="text-slate-300">“{modal.req.request_text}”</div>
-              <div className="text-xs text-slate-500 mt-2">Room {modal.req.room_number} · {modal.req.guest_name} · {modal.req.intent} · {modal.req.priority}</div>
+          <div className="bg-[var(--bg-card)] border border-[var(--border-color)] p-6 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-black text-white mb-4 uppercase tracking-widest border-b border-[var(--card-border)] pb-4">{modal.type} — {modal.req.request_id}</h2>
+            <div className="mb-5 bg-[var(--bg-primary)] border border-[var(--card-border)] p-4 rounded-xl text-sm">
+              <div className="text-[var(--text-secondary)]">“{modal.req.request_text}”</div>
+              <div className="text-xs text-[var(--text-muted)] mt-2">Room {modal.req.room_number} · {modal.req.guest_name} · {modal.req.intent} · {modal.req.priority}</div>
             </div>
 
             {modal.type === 'APPROVE' && (
               <div className="space-y-4">
-                <div className="text-xs text-slate-400">Approving assigns an eligible <span className="text-white font-bold">{modal.req.department}</span> worker immediately, notifies them and the guest, and writes an audit record.</div>
+                <div className="text-xs text-[var(--text-secondary)]">Approving assigns an eligible <span className="text-white font-bold">{modal.req.department}</span> worker immediately, notifies them and the guest, and writes an audit record.</div>
                 <input value={approveNote} onChange={e => setApproveNote(e.target.value)} placeholder="Optional instruction note for staff…"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white text-sm focus:border-emerald-500 focus:outline-none" />
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--card-border)] rounded-lg p-3 text-white text-sm focus:border-emerald-500 focus:outline-none" />
               </div>
             )}
 
             {modal.type === 'DECLINE' && (
               <div className="space-y-3">
-                <div className="text-xs text-slate-400">Declining notifies the guest with your reason. <span className="text-rose-400 font-bold">A reason is required.</span></div>
+                <div className="text-xs text-[var(--text-secondary)]">Declining notifies the guest with your reason. <span className="text-rose-400 font-bold">A reason is required.</span></div>
                 <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="Reason shown to the guest…" rows={3}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white text-sm focus:border-rose-500 focus:outline-none" />
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--card-border)] rounded-lg p-3 text-white text-sm focus:border-rose-500 focus:outline-none" />
               </div>
             )}
 
@@ -295,23 +295,23 @@ export function GuestRequestsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Priority</label>
+                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase block mb-1">Priority</label>
                     <select value={modifyData.priority} onChange={e => setModifyData({ ...modifyData, priority: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white text-sm">
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--card-border)] rounded-lg p-2.5 text-white text-sm">
                       {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(p => <option key={p}>{p}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Department</label>
+                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase block mb-1">Department</label>
                     <select value={modifyData.department} onChange={e => setModifyData({ ...modifyData, department: e.target.value, assigned_staff: 'auto' })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white text-sm">
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--card-border)] rounded-lg p-2.5 text-white text-sm">
                       {['housekeeping', 'maintenance', 'fnb', 'front_desk', 'security', 'spa', 'it'].map(d => <option key={d}>{d}</option>)}
                     </select>
                   </div>
                   <div className="col-span-2">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Assign staff</label>
+                    <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase block mb-1">Assign staff</label>
                     <select value={modifyData.assigned_staff} onChange={e => setModifyData({ ...modifyData, assigned_staff: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white text-sm">
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--card-border)] rounded-lg p-2.5 text-white text-sm">
                       <option value="auto">Auto-assign (best eligible: availability × skill × workload)</option>
                       {staffList.filter(s => s.department === modifyData.department).map(s => (
                         <option key={s._id} value={s.name}>{s.name} ({s.task_status}{!s.is_available ? ', off-shift' : ''})</option>
@@ -320,17 +320,17 @@ export function GuestRequestsPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Modified instructions (original text is preserved)</label>
+                  <label className="text-[10px] font-bold text-[var(--text-muted)] uppercase block mb-1">Modified instructions (original text is preserved)</label>
                   <textarea value={modifyData.instructions} onChange={e => setModifyData({ ...modifyData, instructions: e.target.value })} rows={3}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white text-sm focus:border-indigo-500 focus:outline-none" />
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--card-border)] rounded-lg p-3 text-white text-sm focus:border-indigo-500 focus:outline-none" />
                 </div>
                 <input value={reason} onChange={e => setReason(e.target.value)} placeholder="Reason for modification (audited)…"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white text-sm focus:border-indigo-500 focus:outline-none" />
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--card-border)] rounded-lg p-3 text-white text-sm focus:border-indigo-500 focus:outline-none" />
               </div>
             )}
 
-            <div className="flex gap-3 mt-6 pt-4 border-t border-slate-800">
-              <button onClick={() => setModal({ type: null, req: null })} className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl uppercase text-xs tracking-wider transition">Cancel</button>
+            <div className="flex gap-3 mt-6 pt-4 border-t border-[var(--card-border)]">
+              <button onClick={() => setModal({ type: null, req: null })} className="flex-1 py-3 bg-[var(--bg-secondary)] hover:bg-[var(--bg-secondary)] text-white font-bold rounded-xl uppercase text-xs tracking-wider transition">Cancel</button>
               <button disabled={busy || (modal.type === 'DECLINE' && !reason.trim())}
                 onClick={() => {
                   if (modal.type === 'APPROVE') decide(modal.req.request_id, 'approve', { note: approveNote });

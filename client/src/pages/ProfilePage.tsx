@@ -23,7 +23,7 @@ export function ProfilePage() {
         {/* Avatar section */}
         <div className="flex items-center gap-5 mb-6 pb-6" style={{ borderBottom: '1px solid var(--color-resort-border)' }}>
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold text-white shrink-0"
+            className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center text-2xl font-bold text-[var(--text-primary)] shrink-0"
             style={{ background: 'var(--color-resort-primary)' }}
           >
             {user?.name.charAt(0).toUpperCase()}
@@ -63,7 +63,7 @@ export function ProfilePage() {
           ].map((field) => (
             <div key={field.label} className="flex items-center gap-4">
               <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                className="w-9 h-9 rounded-[1rem] flex items-center justify-center shrink-0"
                 style={{ background: 'var(--color-resort-surface)' }}
               >
                 <field.icon className="w-4 h-4" style={{ color: 'var(--color-resort-muted)' }} />

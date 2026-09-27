@@ -122,7 +122,7 @@ export function CouncilAndApproval() {
   };
 
   if (loading || !council) {
-    return <div className="p-8 text-center text-slate-400">Assembling AI Specialist Decision Council...</div>;
+    return <div className="p-8 text-center text-[var(--text-secondary)]">Assembling AI Specialist Decision Council...</div>;
   }
 
   const { council_agents, chief_synthesis } = council;
@@ -131,12 +131,12 @@ export function CouncilAndApproval() {
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div>
         <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black text-white tracking-tight">AI DECISION COUNCIL</h1>
+          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">AI DECISION COUNCIL</h1>
           <span className="px-2 py-0.5 bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[10px] font-bold rounded">
             MULTI-AGENT INTELLIGENCE
           </span>
         </div>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-[var(--text-secondary)] mt-1">
           Specialist agents reason over the same Digital Twin operational state to reconcile trade-offs.
         </p>
       </div>
@@ -144,50 +144,50 @@ export function CouncilAndApproval() {
       {/* 6 Specialist Agents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {council_agents?.map((agent: any) => (
-          <div key={agent.name} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+          <div key={agent.name} className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center">
-                <span className="text-xs font-bold text-slate-200">{agent.name}</span>
+                <span className="text-xs font-bold text-[var(--text-primary)]">{agent.name}</span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                   agent.risk === 'CRITICAL' ? 'bg-rose-500/20 text-rose-300' : 'bg-amber-500/20 text-amber-300'
                 }`}>
                   {agent.risk}
                 </span>
               </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">{agent.role}</div>
-              <div className="mt-3 text-xs font-bold text-indigo-300">{agent.verdict}</div>
-              <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">{agent.reasoning}</p>
+              <div className="text-[10px] text-[var(--text-secondary)] mt-0.5">{agent.role}</div>
+              <div className="mt-3 text-xs font-bold text-[var(--accent)]">{agent.verdict}</div>
+              <p className="text-xs text-[var(--text-secondary)] mt-1.5 leading-relaxed">{agent.reasoning}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Chief Decision Agent Synthesis */}
-      <div className="bg-gradient-to-br from-indigo-950/60 to-slate-900 border border-indigo-500/40 rounded-xl p-6 space-y-4 shadow-xl">
+      <div className="bg-gradient-to-br from-indigo-950/60 to-slate-900 border border-[var(--accent)]/40 rounded-[1rem] p-6 space-y-4 shadow-[var(--card-shadow)]">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-indigo-400 uppercase tracking-wider">CHIEF DECISION AGENT SYNTHESIS</div>
-            <div className="text-lg font-black text-white mt-0.5">{chief_synthesis.title}</div>
+            <div className="text-xs font-bold text-[var(--accent)] uppercase tracking-wider">CHIEF DECISION AGENT SYNTHESIS</div>
+            <div className="text-lg font-black text-[var(--text-primary)] mt-0.5">{chief_synthesis.title}</div>
           </div>
-          <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-500/40 text-indigo-200 text-xs font-bold rounded-full">
+          <span className="px-3 py-1 bg-[var(--accent-soft)] border border-[var(--accent)]/40 text-indigo-200 text-xs font-bold rounded-full">
             Confidence: {(chief_synthesis.confidence * 100).toFixed(0)}%
           </span>
         </div>
 
-        <p className="text-xs text-slate-300 leading-relaxed">{chief_synthesis.recommended_action}</p>
+        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{chief_synthesis.recommended_action}</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-          <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-xs">
-            <div className="font-bold text-slate-200 mb-1.5">Action Plan Steps:</div>
-            <ul className="space-y-1 text-slate-400 text-[11px]">
+          <div className="bg-[var(--bg-card)]/80 p-3 rounded-lg border border-[var(--card-border)] text-xs">
+            <div className="font-bold text-[var(--text-primary)] mb-1.5">Action Plan Steps:</div>
+            <ul className="space-y-1 text-[var(--text-secondary)] text-[11px]">
               {chief_synthesis.implementation_steps?.map((s: string, i: number) => (
                 <li key={i}>✓ {s}</li>
               ))}
             </ul>
           </div>
-          <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-800 text-xs">
-            <div className="font-bold text-slate-200 mb-1.5">Rollback Protocol:</div>
-            <p className="text-slate-400 text-[11px]">{chief_synthesis.rollback_plan}</p>
+          <div className="bg-[var(--bg-card)]/80 p-3 rounded-lg border border-[var(--card-border)] text-xs">
+            <div className="font-bold text-[var(--text-primary)] mb-1.5">Rollback Protocol:</div>
+            <p className="text-[var(--text-secondary)] text-[11px]">{chief_synthesis.rollback_plan}</p>
           </div>
         </div>
 
@@ -195,7 +195,7 @@ export function CouncilAndApproval() {
           <button
             onClick={handleGeneratePlan}
             disabled={decisionProcessing}
-            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition"
+            className="w-full py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98]  font-bold text-xs rounded-[1rem] shadow-[var(--card-shadow)] transition"
           >
             {decisionProcessing ? 'Compiling Action Card...' : 'Draft Formal Action Card for Human Approval →'}
           </button>
@@ -204,11 +204,11 @@ export function CouncilAndApproval() {
 
       {/* Human-in-the-loop Approval Queue & Audit */}
       {actionCard && (
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-6 space-y-4">
+          <div className="flex justify-between items-center border-b border-[var(--card-border)] pb-3">
             <div>
-              <span className="text-xs text-indigo-400 font-mono font-bold">{actionCard.action_id}</span>
-              <h3 className="text-sm font-bold text-white">{actionCard.title}</h3>
+              <span className="text-xs text-[var(--accent)] font-mono font-bold">{actionCard.action_id}</span>
+              <h3 className="text-sm font-bold text-[var(--text-primary)]">{actionCard.title}</h3>
             </div>
             <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase ${
               actionCard.approval_status === 'approved' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : actionCard.approval_status === 'rejected' ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
@@ -217,11 +217,11 @@ export function CouncilAndApproval() {
             </span>
           </div>
 
-          <div className="text-xs text-slate-300">
-            <span className="font-bold text-slate-200">Trigger:</span> {actionCard.trigger} · <span className="font-bold text-slate-200">Affects:</span>{' '}
+          <div className="text-xs text-[var(--text-secondary)]">
+            <span className="font-bold text-[var(--text-primary)]">Trigger:</span> {actionCard.trigger} · <span className="font-bold text-[var(--text-primary)]">Affects:</span>{' '}
             {actionCard.affected_departments?.join(', ')}
             {actionCard.evidence?.length > 0 && (
-              <div className="mt-1 text-[11px] text-slate-400">Evidence: {actionCard.evidence.join(' · ')}</div>
+              <div className="mt-1 text-[11px] text-[var(--text-secondary)]">Evidence: {actionCard.evidence.join(' · ')}</div>
             )}
           </div>
 
@@ -230,41 +230,41 @@ export function CouncilAndApproval() {
               <button
                 onClick={() => handleApprove('APPROVE')}
                 disabled={decisionProcessing}
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg transition"
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-[var(--text-primary)] font-bold text-xs rounded-[1rem] shadow-[var(--card-shadow)] transition"
               >
                 ✓ APPROVE & MUTATE DIGITAL TWIN
               </button>
               <button
                 onClick={() => handleApprove('REJECT')}
                 disabled={decisionProcessing}
-                className="px-6 py-3 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl transition"
+                className="px-6 py-3 bg-rose-600 hover:bg-rose-500 text-[var(--text-primary)] font-bold text-xs rounded-[1rem] transition"
               >
                 ✗ REJECT
               </button>
             </div>
           ) : actionCard.approval_status === 'rejected' ? (
-            <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-xl space-y-2">
+            <div className="p-4 bg-rose-950/30 border border-rose-500/40 rounded-[1rem] space-y-2">
               <div className="text-xs font-bold text-rose-400">
                 ✗ Plan Rejected — Digital Twin unchanged.
               </div>
               {auditLog && (
-                <div className="mt-2 text-[10px] font-mono text-slate-400 bg-slate-950 p-2 rounded">
+                <div className="mt-2 text-[10px] font-mono text-[var(--text-secondary)] bg-[var(--bg-secondary)] p-2 rounded">
                   Audit Log Registered: {auditLog.action_type} by {auditLog.user_name} ({auditLog.user_role})
                 </div>
               )}
             </div>
           ) : (
-            <div className="p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-xl space-y-2">
+            <div className="p-4 bg-emerald-950/30 border border-emerald-500/40 rounded-[1rem] space-y-2">
               <div className="text-xs font-bold text-emerald-400">
                 ✅ Plan Executed on MongoDB Digital Twin!
               </div>
-              <div className="text-[11px] text-slate-300">
+              <div className="text-[11px] text-[var(--text-secondary)]">
                 • {actionCard.implementation_steps?.[0] || 'Action plan executed across affected departments.'}<br />
                 • A new operational ticket has been created and routed to the responsible department.<br />
                 • Staff roster and audit trail updated in real time.
               </div>
               {auditLog && (
-                <div className="mt-2 text-[10px] font-mono text-slate-400 bg-slate-950 p-2 rounded">
+                <div className="mt-2 text-[10px] font-mono text-[var(--text-secondary)] bg-[var(--bg-secondary)] p-2 rounded">
                   Audit Log Registered: {auditLog.action_type} by {auditLog.user_name} ({auditLog.user_role})
                 </div>
               )}

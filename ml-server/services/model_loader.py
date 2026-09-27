@@ -18,7 +18,7 @@ class ModelStore:
         if self._loaded:
             return
         
-        print("🔄 Loading all ML models...")
+        print("Loading all ML models...")
         
         try:
             self.occupancy_model = self._load("occupancy_forecast_model.joblib")
@@ -36,20 +36,20 @@ class ModelStore:
             self.scaler = self._load("guest_segmentation_scaler.joblib")
             
             self._loaded = True
-            print("✅ All models loaded successfully!")
+            print("All models loaded successfully!")
             
         except Exception as e:
-            print(f"⚠️ Some models failed to load: {e}")
+            print(f"Some models failed to load: {e}")
             self._loaded = True  # Don't retry, use fallbacks
     
     def _load(self, filename):
         filepath = MODEL_DIR / filename
         if filepath.exists():
             model = joblib.load(filepath)
-            print(f"  ✅ Loaded {filename}")
+            print(f"  Loaded {filename}")
             return model
         else:
-            print(f"  ⚠️ {filename} not found, will use fallback")
+            print(f"  {filename} not found, will use fallback")
             return None
 
 # Global instance

@@ -102,7 +102,7 @@ export default function AICopilot() {
       <button
         onClick={() => setOpen((o) => !o)}
         className={`fixed bottom-5 right-5 z-[900] flex items-center gap-2 rounded-full px-4 py-3 font-bold text-white shadow-2xl transition-all hover:scale-105 ${
-          open ? 'bg-slate-800 shadow-black/50' : 'bg-gradient-to-r from-violet-600 to-cyan-600 shadow-violet-900/50'
+          open ? 'bg-[var(--bg-secondary)] shadow-black/50' : 'bg-gradient-to-r from-violet-600 to-cyan-600 shadow-violet-900/50'
         }`}
         aria-label="AI assistant"
       >
@@ -113,7 +113,7 @@ export default function AICopilot() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-20 right-5 z-[900] flex h-[min(640px,80vh)] w-[min(420px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950/95 shadow-2xl shadow-black/60 backdrop-blur-xl">
+        <div className="fixed bottom-20 right-5 z-[900] flex h-[min(640px,80vh)] w-[min(420px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-primary)]/95 shadow-2xl shadow-black/60 backdrop-blur-xl">
           {/* Header */}
           <div className="flex items-center justify-between gap-2 border-b border-white/10 bg-gradient-to-r from-violet-600/20 to-cyan-600/20 px-4 py-3">
             <div className="flex items-center gap-2.5">
@@ -122,12 +122,12 @@ export default function AICopilot() {
               </div>
               <div>
                 <p className="text-[13px] font-black text-white">{isGuest ? 'Aria · Resort Concierge' : 'Operations Copilot'}</p>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-[var(--text-secondary)]">
                   {status?.cloudConfigured ? `${status.activeProvider} · ${status.activeModel}` : 'On-board grounded reasoner'} · live data
                 </p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white">
+            <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-[var(--text-secondary)] transition hover:bg-white/10 hover:text-white">
               <X size={16} />
             </button>
           </div>
@@ -135,19 +135,19 @@ export default function AICopilot() {
           {/* Live context strip */}
           {ctx && (
             <div className="flex flex-wrap gap-1.5 border-b border-white/5 bg-black/30 px-3 py-2">
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-slate-300">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-[var(--text-secondary)]">
                 <CloudRain size={9} className="text-sky-400" /> {ctx.weather?.tempC}°C · {ctx.weather?.precipMm}mm · {ctx.weather?.band}
               </span>
               {!isGuest && (
                 <>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-slate-300">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-[var(--text-secondary)]">
                     <Users size={9} className="text-emerald-400" /> {ctx.occupancyPct}% occupancy
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-slate-300">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-[var(--text-secondary)]">
                     <Ticket size={9} className="text-amber-400" /> {ctx.openTickets} tickets
                   </span>
                   {ctx.socialNet !== null && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-slate-300">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[9px] text-[var(--text-secondary)]">
                       <Radio size={9} className="text-fuchsia-400" /> sentiment {ctx.socialNet}
                     </span>
                   )}
@@ -177,7 +177,7 @@ export default function AICopilot() {
                           {m.meta.actions.map((a: any, k: number) => (
                             <div key={k} className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1.5">
                               <p className="text-[11px] font-bold text-emerald-200">✓ {a.label}</p>
-                              <p className="text-[10px] text-slate-300">{a.detail}</p>
+                              <p className="text-[10px] text-[var(--text-secondary)]">{a.detail}</p>
                             </div>
                           ))}
                         </div>
@@ -187,8 +187,8 @@ export default function AICopilot() {
                           <Badge tone={m.meta.mode === 'CLOUD' ? 'CALM' : m.meta.mode === 'ERROR' ? 'WARNING' : 'INFO'}>
                             {m.meta.mode === 'CLOUD' ? m.meta.provider : m.meta.mode === 'TOOL' ? 'dispatched' : 'on-board AI'}
                           </Badge>
-                          {m.meta.intent && <span className="text-[9px] uppercase tracking-wider text-slate-500">intent: {m.meta.intent}</span>}
-                          {!!m.meta.latencyMs && <span className="text-[9px] text-slate-600">{m.meta.latencyMs} ms</span>}
+                          {m.meta.intent && <span className="text-[9px] uppercase tracking-wider text-[var(--text-muted)]">intent: {m.meta.intent}</span>}
+                          {!!m.meta.latencyMs && <span className="text-[9px] text-[var(--text-muted)]">{m.meta.latencyMs} ms</span>}
                         </div>
                       )}
                     </>
@@ -200,7 +200,7 @@ export default function AICopilot() {
               <div className="flex justify-start">
                 <div className="flex items-center gap-2 rounded-2xl rounded-bl-sm border border-white/10 bg-white/[0.04] px-3.5 py-3">
                   <RefreshCw size={12} className="animate-spin text-cyan-400" />
-                  <span className="text-[12px] text-slate-400">
+                  <span className="text-[12px] text-[var(--text-secondary)]">
                     {isGuest ? 'Checking live conditions…' : 'Reading live twin + weather + social…'}
                   </span>
                 </div>
@@ -216,7 +216,7 @@ export default function AICopilot() {
                 key={p}
                 onClick={() => send(p)}
                 disabled={busy}
-                className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-slate-300 transition hover:border-cyan-400/40 hover:bg-cyan-500/10 hover:text-cyan-200 disabled:opacity-40"
+                className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] text-[var(--text-secondary)] transition hover:border-cyan-400/40 hover:bg-cyan-500/10 hover:text-cyan-200 disabled:opacity-40"
               >
                 {p}
               </button>
@@ -226,7 +226,7 @@ export default function AICopilot() {
           {/* Composer */}
           <div className="flex items-center gap-2 border-t border-white/10 bg-black/30 p-3">
             <div className="relative flex-1">
-              <MessageSquare size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <MessageSquare size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -244,7 +244,7 @@ export default function AICopilot() {
             </button>
           </div>
 
-          <p className="border-t border-white/5 bg-black/40 px-3 py-1.5 text-center text-[9px] text-slate-600">
+          <p className="border-t border-white/5 bg-black/40 px-3 py-1.5 text-center text-[9px] text-[var(--text-muted)]">
             <Zap size={8} className="mr-1 inline" />
             Grounded in live weather, social signals and the digital twin — no hallucinated metrics
           </p>

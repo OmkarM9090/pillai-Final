@@ -26,7 +26,7 @@ export default function App() {
       <ErrorBoundary>
         <AuthProvider>
           <BrowserRouter>
-          <div className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased">
+          <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans antialiased">
             <Navbar />
             <main className="pb-12">
               <Routes>

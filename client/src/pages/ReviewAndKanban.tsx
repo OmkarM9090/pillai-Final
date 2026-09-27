@@ -115,37 +115,37 @@ export function ReviewAndKanban() {
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div>
         <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black text-white tracking-tight">GUEST REVIEW INTEL & KANBAN</h1>
+          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">GUEST REVIEW INTEL & KANBAN</h1>
           <span className="px-2 py-0.5 bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold rounded">
             ASPECT SENTIMENT & SLA
           </span>
         </div>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-[var(--text-secondary)] mt-1">
           Untrusted guest feedback is parsed for aspect sentiment, extracted into evidence, and routed directly into Facilities Work Orders.
         </p>
       </div>
 
       {/* Input Review Box */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+      <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5 space-y-4">
         <form onSubmit={handleAnalyze} className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div className="md:col-span-3">
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Guest Review / Complaint Input</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Guest Review / Complaint Input</label>
               <input
                 type="text"
                 value={reviewText}
                 onChange={(e) => setReviewText(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                 placeholder="e.g. AC in Room 304 is rattling and leaking."
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Room #</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Room #</label>
               <input
                 type="text"
                 value={roomNumber}
                 onChange={(e) => setRoomNumber(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
               />
             </div>
           </div>
@@ -153,31 +153,31 @@ export function ReviewAndKanban() {
           <button
             type="submit"
             disabled={analyzing}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-lg shadow transition"
+            className="px-5 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98]  font-bold text-xs rounded-lg shadow transition"
           >
             {analyzing ? 'Extracting Evidence...' : 'Analyze & Dispatch Ticket →'}
           </button>
         </form>
 
         {analysis && (
-          <div className="p-4 bg-slate-950 border border-slate-800 rounded-lg space-y-2">
+          <div className="p-4 bg-[var(--bg-secondary)] border border-[var(--card-border)] rounded-lg space-y-2">
             <div className="flex items-center flex-wrap gap-x-3 gap-y-2 text-xs">
-              <span className="font-bold text-slate-300">Extracted Aspect:</span>
-              <span className="px-2 py-0.5 bg-slate-800 text-slate-200 rounded">{analysis.aspect}</span>
-              <span className="font-bold text-slate-300">Sentiment:</span>
+              <span className="font-bold text-[var(--text-secondary)]">Extracted Aspect:</span>
+              <span className="px-2 py-0.5 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded">{analysis.aspect}</span>
+              <span className="font-bold text-[var(--text-secondary)]">Sentiment:</span>
               <span className={`px-2 py-0.5 rounded font-bold ${
                 analysis.sentiment === 'POSITIVE' ? 'bg-emerald-500/20 text-emerald-300' :
-                analysis.sentiment === 'NEUTRAL' ? 'bg-slate-700 text-slate-300' : 'bg-rose-500/20 text-rose-300'
+                analysis.sentiment === 'NEUTRAL' ? 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]' : 'bg-rose-500/20 text-rose-300'
               }`}>{analysis.sentiment}</span>
               {analysis.sentiment_source && (
-                <span className="px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded text-[10px] font-bold uppercase">
+                <span className="px-2 py-0.5 bg-indigo-500/10 border border-[var(--accent)]/30 text-[var(--accent)] rounded text-[10px] font-bold uppercase">
                   {analysis.sentiment_source === 'ml_model' ? '🧠 ML Model' : 'Rule-Based'}
                 </span>
               )}
-              <span className="font-bold text-slate-300">Routing Dept:</span>
-              <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded uppercase font-bold">{analysis.department}</span>
+              <span className="font-bold text-[var(--text-secondary)]">Routing Dept:</span>
+              <span className="px-2 py-0.5 bg-[var(--accent-soft)] text-[var(--accent)] rounded uppercase font-bold">{analysis.department}</span>
             </div>
-            <div className="text-[11px] text-slate-400">
+            <div className="text-[11px] text-[var(--text-secondary)]">
               Evidence Tokens Identified: {analysis.evidence_terms?.map((t: string) => (
                 <span key={t} className="inline-block bg-rose-950/60 border border-rose-500/40 text-rose-200 px-1.5 py-0.5 rounded mx-1 font-mono">
                   "{t}"
@@ -195,30 +195,30 @@ export function ReviewAndKanban() {
 
       {/* Facilities Kanban */}
       <div>
-        <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-3">Facilities Operational Kanban</h2>
+        <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3">Facilities Operational Kanban</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {columns.map((col) => {
             const colTickets = tickets.filter((t) => t.status === col.key);
             return (
-              <div key={col.key} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-col">
-                <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-3">
-                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">{col.label}</span>
-                  <span className="text-xs text-slate-500">{colTickets.length}</span>
+              <div key={col.key} className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 flex flex-col">
+                <div className="flex justify-between items-center border-b border-[var(--card-border)] pb-2 mb-3">
+                  <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">{col.label}</span>
+                  <span className="text-xs text-[var(--text-muted)]">{colTickets.length}</span>
                 </div>
 
                 <div className="space-y-3 flex-1">
                   {colTickets.map((t) => (
-                    <div key={t.ticket_id} className="bg-slate-800/80 border border-slate-700 rounded-lg p-3 space-y-2">
+                    <div key={t.ticket_id} className="bg-[var(--bg-secondary)]/80 border border-[var(--border-color)] rounded-lg p-3 space-y-2">
                       <div className="flex justify-between items-start">
-                        <span className="text-[10px] font-mono text-indigo-400">{t.ticket_id}</span>
+                        <span className="text-[10px] font-mono text-[var(--accent)]">{t.ticket_id}</span>
                         <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                           t.priority === 'Critical' ? 'bg-rose-500/20 text-rose-300' : 'bg-amber-500/20 text-amber-300'
                         }`}>
                           {t.priority}
                         </span>
                       </div>
-                      <div className="text-xs font-bold text-white">{t.title}</div>
-                      <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1">
+                      <div className="text-xs font-bold text-[var(--text-primary)]">{t.title}</div>
+                      <div className="flex justify-between items-center text-[10px] text-[var(--text-secondary)] pt-1">
                         <span>Room {t.room_number || 'General'}</span>
                         <span className="uppercase">{t.department}</span>
                       </div>
@@ -227,7 +227,7 @@ export function ReviewAndKanban() {
                       {col.key === 'todo' && (
                         <button
                           onClick={() => updateStatus(t.ticket_id, 'in_progress')}
-                          className="w-full mt-2 py-1 bg-slate-700 hover:bg-slate-600 text-[10px] font-bold text-slate-200 rounded transition"
+                          className="w-full mt-2 py-1 bg-[var(--bg-secondary)] hover:bg-[var(--border-color)] text-[10px] font-bold text-[var(--text-primary)] rounded transition"
                         >
                           Move to In Progress →
                         </button>
@@ -235,7 +235,7 @@ export function ReviewAndKanban() {
                       {col.key === 'in_progress' && (
                         <button
                           onClick={() => updateStatus(t.ticket_id, 'completed')}
-                          className="w-full mt-2 py-1 bg-emerald-600/80 hover:bg-emerald-600 text-[10px] font-bold text-white rounded transition"
+                          className="w-full mt-2 py-1 bg-emerald-600/80 hover:bg-emerald-600 text-[10px] font-bold text-[var(--text-primary)] rounded transition"
                         >
                           Mark Completed ✓
                         </button>
@@ -243,7 +243,7 @@ export function ReviewAndKanban() {
                     </div>
                   ))}
                   {colTickets.length === 0 && (
-                    <div className="text-center py-8 text-xs text-slate-600 italic">No tickets</div>
+                    <div className="text-center py-8 text-xs text-[var(--text-muted)] italic">No tickets</div>
                   )}
                 </div>
               </div>

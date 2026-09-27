@@ -17,7 +17,7 @@ export function SettingsPage() {
 
       <div className="card flex flex-col items-center text-center py-12">
         <div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+          className="w-14 h-14 rounded-[1.5rem] flex items-center justify-center mb-4"
           style={{ background: 'rgba(30, 58, 95, 0.08)' }}
         >
           <Settings className="w-7 h-7" style={{ color: 'var(--color-resort-primary)' }} />

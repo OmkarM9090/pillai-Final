@@ -115,7 +115,7 @@ export function WeatherTwin() {
   return (
     <div className="mx-auto max-w-[1600px] px-4 py-6 space-y-5">
       {/* Header */}
-      <header className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-slate-900/80 to-indigo-950/50 p-5 shadow-2xl">
+      <header className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-primary)]/80 to-indigo-950/50 p-5 shadow-2xl">
         <div className="pointer-events-none absolute -left-20 -top-24 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl" />
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -123,7 +123,7 @@ export function WeatherTwin() {
               <Radar size={12} className="animate-pulse" /> Feature 4 · Digital twin what-if
             </p>
             <h1 className="mt-1.5 text-2xl font-black tracking-tight text-white sm:text-3xl">Weather Scenario Simulator</h1>
-            <p className="mt-1 max-w-3xl text-[13px] text-slate-400">
+            <p className="mt-1 max-w-3xl text-[13px] text-[var(--text-secondary)]">
               Change intensity, duration, wind, temperature or storm location — the twin re-runs the live resort state and every
               downstream system (rooms, roster, F&amp;B, revenue, SLA) moves with it.
             </p>
@@ -132,7 +132,7 @@ export function WeatherTwin() {
             <button
               onClick={() => setAuto((a) => !a)}
               className={`rounded-lg border px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition ${
-                auto ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200' : 'border-white/10 bg-white/5 text-slate-400'
+                auto ? 'border-emerald-400/40 bg-emerald-500/15 text-emerald-200' : 'border-white/10 bg-white/5 text-[var(--text-secondary)]'
               }`}
             >
               {auto ? 'Live recompute' : 'Manual run'}
@@ -164,7 +164,7 @@ export function WeatherTwin() {
                 return (
                   <div key={sl.key}>
                     <div className="mb-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300">
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                         <Icon size={12} className="text-cyan-300" /> {sl.label}
                       </span>
                       <span className="rounded-md bg-white/8 px-2 py-0.5 text-[11px] font-black text-white">
@@ -180,13 +180,13 @@ export function WeatherTwin() {
                       onChange={(e) => update(sl.key, Number(e.target.value))}
                       className={`w-full cursor-pointer ${sl.color}`}
                     />
-                    <p className="mt-0.5 text-[10px] leading-snug text-slate-500">{sl.hint}</p>
+                    <p className="mt-0.5 text-[10px] leading-snug text-[var(--text-muted)]">{sl.hint}</p>
                   </div>
                 );
               })}
               <div>
                 <div className="mb-1 flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300">Storm bearing</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">Storm bearing</span>
                   <span className="rounded-md bg-white/8 px-2 py-0.5 text-[11px] font-black text-white">{scenario.stormBearing}°</span>
                 </div>
                 <input type="range" min={0} max={359} value={scenario.stormBearing} onChange={(e) => update('stormBearing', Number(e.target.value))} className="w-full cursor-pointer accent-fuchsia-500" />
@@ -204,8 +204,8 @@ export function WeatherTwin() {
                     label === p.name ? 'border-cyan-400/40 bg-cyan-500/10' : 'border-white/10 bg-white/[0.03]'
                   }`}
                 >
-                  <p className="text-[12px] font-bold text-slate-100">{p.name}</p>
-                  <p className="mt-0.5 text-[10px] leading-snug text-slate-400">{p.description}</p>
+                  <p className="text-[12px] font-bold text-[var(--text-primary)]">{p.name}</p>
+                  <p className="mt-0.5 text-[10px] leading-snug text-[var(--text-secondary)]">{p.description}</p>
                 </button>
               ))}
             </div>
@@ -217,8 +217,8 @@ export function WeatherTwin() {
                 <Gauge value={result.scenario.severity * 100} label="severity" tone={band} size={104} />
                 <div className="flex-1">
                   <Badge tone={band} pulse={band !== 'CALM'}>{band}</Badge>
-                  <p className="mt-2 text-[12px] font-semibold text-slate-200">{result.scenario.conditionLabel}</p>
-                  <p className="mt-1 text-[10px] text-slate-400">
+                  <p className="mt-2 text-[12px] font-semibold text-[var(--text-primary)]">{result.scenario.conditionLabel}</p>
+                  <p className="mt-1 text-[10px] text-[var(--text-secondary)]">
                     Confidence {(result.confidence * 100).toFixed(0)}% · live feed {result.basedOn.weatherMode} · occupancy {result.basedOn.occupancyPct}%
                   </p>
                 </div>
@@ -226,7 +226,7 @@ export function WeatherTwin() {
               <div className="mt-3 space-y-1.5">
                 {result.severityBreakdown.drivers.slice(0, 3).map((d) => (
                   <div key={d.factor} className="flex items-center gap-2">
-                    <span className="w-28 truncate text-[10px] text-slate-400">{d.factor}</span>
+                    <span className="w-28 truncate text-[10px] text-[var(--text-secondary)]">{d.factor}</span>
                     <Bar value={d.contribution * 100} max={40} height={5} />
                   </div>
                 ))}
@@ -254,10 +254,10 @@ export function WeatherTwin() {
                   const st = sev(tone);
                   return (
                     <div key={d.key} className={`rounded-xl border ${st.border} ${st.bg} p-3 transition hover:scale-[1.02]`}>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">{d.label}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)]">{d.label}</p>
                       <div className="mt-1.5 flex items-baseline gap-1.5">
-                        <span className="text-[13px] text-slate-500 line-through">{fmt(d, d.baseline)}</span>
-                        <ArrowRight size={11} className="text-slate-500" />
+                        <span className="text-[13px] text-[var(--text-muted)] line-through">{fmt(d, d.baseline)}</span>
+                        <ArrowRight size={11} className="text-[var(--text-muted)]" />
                         <span className={`text-xl font-black ${st.text}`}>{fmt(d, d.scenario)}</span>
                       </div>
                       <p className={`mt-1 flex items-center gap-1 text-[11px] font-bold ${good ? 'text-emerald-300' : 'text-rose-300'}`}>
@@ -294,10 +294,10 @@ export function WeatherTwin() {
                 {result?.departments.map((d) => (
                   <div key={d.key}>
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-semibold text-slate-200">{d.name}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">{d.name}</span>
                       <span className="flex items-center gap-2">
-                        <span className="text-slate-500">{d.baselinePressure}%</span>
-                        <ArrowRight size={10} className="text-slate-600" />
+                        <span className="text-[var(--text-muted)]">{d.baselinePressure}%</span>
+                        <ArrowRight size={10} className="text-[var(--text-muted)]" />
                         <span className={`font-black ${d.scenarioPressure >= 100 ? 'text-rose-300' : d.scenarioPressure >= 85 ? 'text-orange-300' : 'text-emerald-300'}`}>{d.scenarioPressure}%</span>
                         {d.staffGap > 0 && <Badge tone="WARNING">gap {d.staffGap}</Badge>}
                       </span>
@@ -364,19 +364,19 @@ export function WeatherTwin() {
                   <div key={p.t} className="min-w-[250px] flex-1 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                     <div className="flex items-center justify-between">
                       <span className="rounded-md bg-cyan-500/15 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-cyan-200">{p.t}</span>
-                      <span className="text-[10px] text-slate-500">{p.cumulativeRainMm} mm cum.</span>
+                      <span className="text-[10px] text-[var(--text-muted)]">{p.cumulativeRainMm} mm cum.</span>
                     </div>
-                    <p className="mt-1.5 text-[11px] font-bold text-slate-200">{p.headline}</p>
+                    <p className="mt-1.5 text-[11px] font-bold text-[var(--text-primary)]">{p.headline}</p>
                     <div className="mt-1.5">
                       <Bar value={p.pressure} max={160} height={5} />
                     </div>
                     <ul className="mt-2 space-y-1.5">
                       {p.events.map((e, i) => (
                         <li key={i} className="text-[11px] leading-snug">
-                          <span className={`mr-1 font-bold ${e.level === 'CRIT' ? 'text-rose-300' : e.level === 'WARN' ? 'text-amber-300' : 'text-slate-400'}`}>
+                          <span className={`mr-1 font-bold ${e.level === 'CRIT' ? 'text-rose-300' : e.level === 'WARN' ? 'text-amber-300' : 'text-[var(--text-secondary)]'}`}>
                             {e.zone}
                           </span>
-                          <span className="text-slate-400">· {e.text}</span>
+                          <span className="text-[var(--text-secondary)]">· {e.text}</span>
                         </li>
                       ))}
                     </ul>
@@ -394,7 +394,7 @@ export function WeatherTwin() {
               icon={<ListChecks size={16} />}
               action={
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
                     <input type="checkbox" checked={injectLive} onChange={(e) => setInjectLive(e.target.checked)} className="accent-cyan-500" />
                     Inject into live feed
                   </label>
@@ -423,11 +423,11 @@ export function WeatherTwin() {
                   return (
                     <div key={m.id} className={`rounded-xl border ${st.border} ${st.bg} p-3`}>
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-[12px] font-bold text-slate-100">{m.title}</p>
+                        <p className="text-[12px] font-bold text-[var(--text-primary)]">{m.title}</p>
                         <Badge tone={tone}>{m.priority}</Badge>
                       </div>
-                      <p className="mt-1 text-[11px] leading-snug text-slate-300">{m.detail}</p>
-                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-400">
+                      <p className="mt-1 text-[11px] leading-snug text-[var(--text-secondary)]">{m.detail}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[var(--text-secondary)]">
                         <span className="text-emerald-300">✓ {m.gain}</span>
                         <span>₹{m.costINR.toLocaleString('en-IN')}</span>
                         <span>{m.leadTimeMins} min lead</span>
@@ -444,7 +444,7 @@ export function WeatherTwin() {
                   <p className="flex items-center gap-2 text-[12px] font-bold text-emerald-200">
                     <CheckCircle2 size={14} /> Plan pushed into the live platform
                   </p>
-                  <ul className="mt-2 grid gap-1.5 text-[11px] text-slate-300 sm:grid-cols-2">
+                  <ul className="mt-2 grid gap-1.5 text-[11px] text-[var(--text-secondary)] sm:grid-cols-2">
                     <li>• Action card <b className="text-white">{applied.actionCard}</b> created — awaiting approval in Council &amp; Approval</li>
                     <li>• {applied.tickets?.length ?? 0} operational tickets raised: <b className="text-white">{(applied.tickets ?? []).join(', ') || '—'}</b></li>
                     <li>• World signal registered so every module sees the weather event</li>

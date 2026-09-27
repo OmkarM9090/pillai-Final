@@ -28,14 +28,14 @@ export function Panel({ children, className = '', title, subtitle, icon, action 
   children: ReactNode; className?: string; title?: string; subtitle?: string; icon?: ReactNode; action?: ReactNode;
 }) {
   return (
-    <section className={`relative rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-2xl shadow-black/40 ${className}`}>
+    <section className={`relative rounded-2xl border border-white/10 bg-[var(--bg-card)]/60 backdrop-blur-xl shadow-2xl shadow-black/40 ${className}`}>
       {(title || action) && (
         <header className="flex items-start justify-between gap-3 px-5 pt-4 pb-3 border-b border-white/5">
           <div className="flex items-start gap-3 min-w-0">
             {icon && <div className="mt-0.5 text-cyan-300 shrink-0">{icon}</div>}
             <div className="min-w-0">
-              {title && <h2 className="text-[13px] font-bold uppercase tracking-[0.14em] text-slate-200 truncate">{title}</h2>}
-              {subtitle && <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">{subtitle}</p>}
+              {title && <h2 className="text-[13px] font-bold uppercase tracking-[0.14em] text-[var(--text-primary)] truncate">{title}</h2>}
+              {subtitle && <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-snug">{subtitle}</p>}
             </div>
           </div>
           {action && <div className="shrink-0">{action}</div>}
@@ -63,14 +63,14 @@ export function StatTile({ label, value, unit, sub, tone = 'INFO', icon, compact
   return (
     <div className={`rounded-xl border ${s.border} ${s.bg} ${compact ? 'p-3' : 'p-4'} transition hover:scale-[1.015] hover:shadow-lg ${s.glow}`}>
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{label}</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">{label}</p>
         {icon && <span className={s.text}>{icon}</span>}
       </div>
       <div className={`mt-1.5 font-black text-white leading-none ${compact ? 'text-xl' : 'text-2xl'}`}>
         {value}
-        {unit && <span className="ml-1 text-sm font-bold text-slate-400">{unit}</span>}
+        {unit && <span className="ml-1 text-sm font-bold text-[var(--text-secondary)]">{unit}</span>}
       </div>
-      {sub && <p className="mt-1.5 text-[11px] text-slate-400 leading-snug">{sub}</p>}
+      {sub && <p className="mt-1.5 text-[11px] text-[var(--text-secondary)] leading-snug">{sub}</p>}
     </div>
   );
 }
@@ -124,7 +124,7 @@ export function Gauge({ value, label, size = 120, tone = 'INFO' }: { value: numb
       </svg>
       <div className="absolute text-center">
         <div className={`text-2xl font-black ${s.text}`}>{Math.round(pct)}<span className="text-xs">%</span></div>
-        {label && <div className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">{label}</div>}
+        {label && <div className="text-[9px] uppercase tracking-wider text-[var(--text-secondary)] font-bold">{label}</div>}
       </div>
     </div>
   );
@@ -148,7 +148,7 @@ export function Skeleton({ className = '' }: { className?: string }) {
 export function AiText({ text, className = '' }: { text: string; className?: string }) {
   const lines = (text || '').split('\n');
   return (
-    <div className={`space-y-1.5 text-[13px] leading-relaxed text-slate-200 ${className}`}>
+    <div className={`space-y-1.5 text-[13px] leading-relaxed text-[var(--text-primary)] ${className}`}>
       {lines.map((raw, i) => {
         const line = raw.trimEnd();
         if (!line.trim()) return <div key={i} className="h-1.5" />;
@@ -156,7 +156,7 @@ export function AiText({ text, className = '' }: { text: string; className?: str
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
           .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
-          .replace(/_(.+?)_/g, '<em class="text-slate-300">$1</em>')
+          .replace(/_(.+?)_/g, '<em class="text-[var(--text-secondary)]">$1</em>')
           .replace(/`(.+?)`/g, '<code class="rounded bg-white/10 px-1 py-0.5 text-[11px] text-cyan-200">$1</code>');
         if (line.startsWith('• ') || line.startsWith('- ')) {
           return (
@@ -181,7 +181,7 @@ export function SourceChip({ mode, provider, note }: { mode: string; provider?: 
   return (
     <span title={note || provider} className="inline-flex items-center gap-1.5">
       <Badge tone={tone} pulse={mode !== 'SIMULATED'}>{label}</Badge>
-      {provider && <span className="hidden sm:inline text-[10px] text-slate-500">{provider}</span>}
+      {provider && <span className="hidden sm:inline text-[10px] text-[var(--text-muted)]">{provider}</span>}
     </span>
   );
 }

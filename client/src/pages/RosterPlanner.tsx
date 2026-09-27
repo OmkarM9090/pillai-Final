@@ -49,30 +49,30 @@ export function RosterPlanner() {
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div>
         <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black text-white tracking-tight">AI STAFF ROSTER SCHEDULER</h1>
+          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">AI STAFF ROSTER SCHEDULER</h1>
           <span className="px-2 py-0.5 bg-teal-500/20 text-teal-300 border border-teal-500/40 text-[10px] font-bold rounded">
             GASA ALGORITHM
           </span>
         </div>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-[var(--text-secondary)] mt-1">
           Greedy Allocation Staff Algorithm — matches skill, preference, and predicted demand into an optimal shift roster.
         </p>
       </div>
 
       {/* Controls */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
+      <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Roster Date</label>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Roster Date</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Predicted Occupancy: {predictedOccupancy}%</label>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Predicted Occupancy: {predictedOccupancy}%</label>
             <input
               type="range"
               min={30}
@@ -83,11 +83,11 @@ export function RosterPlanner() {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Special Event</label>
+            <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1">Special Event</label>
             <select
               value={event}
               onChange={(e) => setEvent(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+              className="w-full bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
             >
               <option value="none">None</option>
               <option value="wedding">Wedding</option>
@@ -97,7 +97,7 @@ export function RosterPlanner() {
           <button
             onClick={generateRoster}
             disabled={loading}
-            className="px-5 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white font-bold text-xs rounded-lg shadow transition"
+            className="px-5 py-2.5 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-[var(--text-primary)] font-bold text-xs rounded-lg shadow transition"
           >
             {loading ? 'Optimizing Roster...' : 'Generate Optimal Roster →'}
           </button>
@@ -109,34 +109,34 @@ export function RosterPlanner() {
         <>
           {/* Summary strip */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
-              <div className="text-[10px] text-slate-500 font-bold uppercase">Staff Assigned</div>
-              <div className="text-2xl font-black text-white mt-1">{roster.summary.total_assigned}</div>
+            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 text-center">
+              <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase">Staff Assigned</div>
+              <div className="text-2xl font-black text-[var(--text-primary)] mt-1">{roster.summary.total_assigned}</div>
             </div>
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
-              <div className="text-[10px] text-slate-500 font-bold uppercase">Coverage Score</div>
+            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 text-center">
+              <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase">Coverage Score</div>
               <div className={`text-2xl font-black mt-1 ${roster.summary.coverage_score >= 90 ? 'text-emerald-400' : roster.summary.coverage_score >= 70 ? 'text-amber-400' : 'text-rose-400'}`}>
                 {roster.summary.coverage_score}%
               </div>
             </div>
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
-              <div className="text-[10px] text-slate-500 font-bold uppercase">Est. Labor Cost</div>
-              <div className="text-2xl font-black text-indigo-400 mt-1">₹{roster.summary.estimated_cost.toLocaleString()}</div>
+            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 text-center">
+              <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase">Est. Labor Cost</div>
+              <div className="text-2xl font-black text-[var(--accent)] mt-1">₹{roster.summary.estimated_cost.toLocaleString()}</div>
             </div>
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center">
-              <div className="text-[10px] text-slate-500 font-bold uppercase">Coverage Gaps</div>
+            <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-4 text-center">
+              <div className="text-[10px] text-[var(--text-muted)] font-bold uppercase">Coverage Gaps</div>
               <div className={`text-2xl font-black mt-1 ${roster.alerts.length > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>{roster.alerts.length}</div>
             </div>
           </div>
 
           {/* Alerts */}
           {roster.alerts.length > 0 && (
-            <div className="bg-rose-950/30 border border-rose-500/30 rounded-xl p-4 space-y-2">
+            <div className="bg-rose-950/30 border border-rose-500/30 rounded-[1rem] p-4 space-y-2">
               <div className="text-xs font-bold text-rose-300 uppercase tracking-wider mb-2">⚠️ Understaffed Shifts</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {roster.alerts.map((a: any, i: number) => (
                   <div key={i} className="flex justify-between items-center bg-black/20 rounded-lg px-3 py-2 text-xs">
-                    <span className="text-slate-200 font-semibold">{DEPT_LABELS[a.department] || a.department} · {a.shift}</span>
+                    <span className="text-[var(--text-primary)] font-semibold">{DEPT_LABELS[a.department] || a.department} · {a.shift}</span>
                     <span className={`font-bold px-2 py-0.5 rounded ${a.severity === 'critical' ? 'bg-rose-500/30 text-rose-300' : 'bg-amber-500/30 text-amber-300'}`}>
                       -{a.gap} short
                     </span>
@@ -147,27 +147,27 @@ export function RosterPlanner() {
           )}
 
           {/* Roster grid */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5">
-            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-4">Shift Assignment Board — {roster.date}</h2>
+          <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5">
+            <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Shift Assignment Board — {roster.date}</h2>
             <div className="space-y-6">
               {Object.entries(roster.roster).map(([dept, shifts]: [string, any]) => (
                 <div key={dept}>
-                  <div className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-2">{DEPT_LABELS[dept] || dept}</div>
+                  <div className="text-xs font-bold text-[var(--accent)] uppercase tracking-wider mb-2">{DEPT_LABELS[dept] || dept}</div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {Object.entries(shifts).map(([shift, staffList]: [string, any]) => (
-                      <div key={shift} className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-3">
+                      <div key={shift} className="bg-[var(--accent-soft)] border border-[var(--border-color)]/50 rounded-lg p-3">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-[11px] font-bold text-slate-300">{SHIFT_LABELS[shift] || shift}</span>
-                          <span className="text-[10px] text-slate-500">{staffList.length} staff</span>
+                          <span className="text-[11px] font-bold text-[var(--text-secondary)]">{SHIFT_LABELS[shift] || shift}</span>
+                          <span className="text-[10px] text-[var(--text-muted)]">{staffList.length} staff</span>
                         </div>
                         <div className="space-y-1.5 max-h-36 overflow-y-auto">
                           {staffList.length === 0 ? (
                             <div className="text-[10px] text-rose-400 italic">No staff assigned</div>
                           ) : (
                             staffList.map((s: any) => (
-                              <div key={s.id} className="flex justify-between items-center text-[11px] bg-slate-900/60 rounded px-2 py-1">
-                                <span className="text-slate-200 font-medium">{s.name}</span>
-                                <span className="text-slate-500">{s.primary_skill === dept ? '★' : '☆'} ₹{s.cost_per_hour}/hr</span>
+                              <div key={s.id} className="flex justify-between items-center text-[11px] bg-[var(--bg-card)]/60 rounded px-2 py-1">
+                                <span className="text-[var(--text-primary)] font-medium">{s.name}</span>
+                                <span className="text-[var(--text-muted)]">{s.primary_skill === dept ? '★' : '☆'} ₹{s.cost_per_hour}/hr</span>
                               </div>
                             ))
                           )}
@@ -183,7 +183,7 @@ export function RosterPlanner() {
       )}
 
       {!roster && !loading && !error && (
-        <div className="text-center p-12 bg-slate-900/50 border border-slate-800 border-dashed rounded-xl text-slate-500 text-sm">
+        <div className="text-center p-12 bg-[var(--bg-card)]/50 border border-[var(--card-border)] border-dashed rounded-[1rem] text-[var(--text-muted)] text-sm">
           Set your parameters above and click "Generate Optimal Roster" to run the GASA scheduling engine.
         </div>
       )}

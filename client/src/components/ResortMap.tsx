@@ -91,12 +91,12 @@ export default function ResortMap({
   const worst = zones.reduce((a, z) => (z.impact > a ? z.impact : a), 0);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl shadow-2xl shadow-black/40">
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-card)]/60 backdrop-blur-xl shadow-2xl shadow-black/40">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 px-4 py-3">
         <div className="flex items-center gap-2">
           <Layers size={15} className="text-cyan-300" />
-          <h3 className="text-[13px] font-bold uppercase tracking-[0.14em] text-slate-200">{title}</h3>
-          <span className="hidden md:inline text-[10px] text-slate-500">
+          <h3 className="text-[13px] font-bold uppercase tracking-[0.14em] text-[var(--text-primary)]">{title}</h3>
+          <span className="hidden md:inline text-[10px] text-[var(--text-muted)]">
             {site.lat.toFixed(4)}°N · {site.lon.toFixed(4)}°E · {zones.length} zones
           </span>
         </div>
@@ -110,7 +110,7 @@ export default function ResortMap({
               key={t.label}
               onClick={() => t.set(!t.on)}
               className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition ${
-                t.on ? 'border-cyan-400/40 bg-cyan-500/15 text-cyan-200' : 'border-white/10 bg-white/5 text-slate-400 hover:text-slate-200'
+                t.on ? 'border-cyan-400/40 bg-cyan-500/15 text-cyan-200' : 'border-white/10 bg-white/5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
               }`}
             >
               {t.icon}
@@ -174,7 +174,7 @@ export default function ResortMap({
                     pathOptions={{ color: '#f43f5e', weight: 2, dashArray: '8 10', opacity: 0.8 }}
                   />
                   <CircleMarker center={stormPos} radius={11} pathOptions={{ color: '#f43f5e', fillColor: '#f43f5e', fillOpacity: 0.45, weight: 2 }}>
-                    <Tooltip permanent direction="top" offset={[0, -8]} className="!bg-slate-900 !border-rose-500/40 !text-rose-200">
+                    <Tooltip permanent direction="top" offset={[0, -8]} className="!bg-[var(--bg-card)] !border-rose-500/40 !text-rose-200">
                       {storm?.label ?? 'Storm centre'} · {storm?.distanceKm} km
                     </Tooltip>
                     <Popup>
@@ -210,7 +210,7 @@ export default function ResortMap({
                       <div style={{ color }} className="font-semibold uppercase text-[10px] tracking-wider">
                         {z.status} · exposure {(z.impact * 100).toFixed(0)}%
                       </div>
-                      <div className="mt-1 text-slate-600">
+                      <div className="mt-1 text-[var(--text-muted)]">
                         {z.rooms ? `${z.rooms} rooms · ` : ''}
                         {z.capacity ? `capacity ${z.capacity} · ` : ''}
                         {z.department}
@@ -235,7 +235,7 @@ export default function ResortMap({
 
           {/* Resort centre */}
           <CircleMarker center={center} radius={8} pathOptions={{ color: '#22d3ee', fillColor: '#22d3ee', fillOpacity: 0.9, weight: 3 }}>
-            <Tooltip permanent direction="right" offset={[10, 0]} className="!bg-slate-900 !border-cyan-500/40 !text-cyan-200">
+            <Tooltip permanent direction="right" offset={[10, 0]} className="!bg-[var(--bg-card)] !border-cyan-500/40 !text-cyan-200">
               {site.name}
             </Tooltip>
           </CircleMarker>
@@ -274,7 +274,7 @@ export default function ResortMap({
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-white/5 px-4 py-2.5 text-[10px] text-slate-400">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-white/5 px-4 py-2.5 text-[10px] text-[var(--text-secondary)]">
         <span className="flex items-center gap-1.5"><Navigation size={11} className="text-cyan-300" /> Resort</span>
         {Object.entries(STATUS_COLOR).map(([k, v]) => (
           <span key={k} className="flex items-center gap-1.5">

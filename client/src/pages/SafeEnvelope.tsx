@@ -44,7 +44,7 @@ export function SafeEnvelope() {
 
   if (loading || !envelope) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center text-slate-400">
+      <div className="min-h-[70vh] flex items-center justify-center text-[var(--text-secondary)]">
         <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mr-3"></div>
         Calculating Safe Capacity Ceiling...
       </div>
@@ -58,31 +58,31 @@ export function SafeEnvelope() {
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <div>
         <div className="flex items-center space-x-2">
-          <h1 className="text-2xl font-black text-white tracking-tight">SAFE OPERATING ENVELOPE</h1>
+          <h1 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">SAFE OPERATING ENVELOPE</h1>
           <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold rounded">
             REVERSE TWIN
           </span>
         </div>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-[var(--text-secondary)] mt-1">
           Smart Resort 360 solves backwards: given today's staff and stock, what is the maximum occupancy we can safely absorb?
         </p>
       </div>
 
       {/* Hero Alert: Gap Warning */}
-      <div className="bg-gradient-to-r from-rose-950/60 to-slate-900 border border-rose-500/40 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-rose-950/60 to-slate-900 border border-rose-500/40 rounded-[1rem] p-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <div className="text-xs font-bold text-rose-400 uppercase tracking-wider">CAPACITY BOTTLENECK DETECTED</div>
-          <div className="text-3xl font-black text-white mt-1">
+          <div className="text-[clamp(1.8rem,4vw,2.5rem)] font-[800] font-display tracking-tight text-[var(--text-primary)] mt-1">
             Safe Ceiling: <span className="text-emerald-400">{safe_occupancy_pct}%</span> vs Projected Demand: <span className="text-rose-400">{projected_demand_pct}%</span>
           </div>
-          <div className="text-xs text-slate-300 mt-2">
+          <div className="text-xs text-[var(--text-secondary)] mt-2">
             ⚠️ <span className="font-semibold text-rose-300">Constraint Violation:</span> Exceeding {safe_occupancy_pct}% will cause service collapse due to <span className="underline">{bottleneck_department}</span> limits ({limiting_factor}).
           </div>
         </div>
 
         <Link
           to="/council"
-          className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 whitespace-nowrap transition"
+          className="px-6 py-3 bg-[var(--accent)] hover:bg-[var(--accent)] text-[var(--on-accent)] transition-transform hover:scale-[1.02] active:scale-[0.98]  font-bold text-xs rounded-[1rem] shadow-[var(--card-shadow)] shadow-indigo-600/30 whitespace-nowrap transition"
         >
           Open AI Decision Council →
         </Link>
@@ -90,27 +90,27 @@ export function SafeEnvelope() {
 
       {/* Constraint Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Department Capacity Ceilings</h2>
+        <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5 space-y-4">
+          <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Department Capacity Ceilings</h2>
 
           <div className="space-y-4">
             {constraints?.map((c: any) => {
               const isBottleneck = c.department === bottleneck_department;
               return (
-                <div key={c.department} className={`p-3 rounded-lg border ${isBottleneck ? 'bg-rose-950/20 border-rose-500/40' : 'bg-slate-800/40 border-slate-700/50'}`}>
+                <div key={c.department} className={`p-3 rounded-lg border ${isBottleneck ? 'bg-rose-950/20 border-rose-500/40' : 'bg-[var(--bg-secondary)]/40 border-[var(--border-color)]/50'}`}>
                   <div className="flex justify-between items-center text-xs font-bold">
-                    <span className={isBottleneck ? 'text-rose-300' : 'text-slate-200'}>
+                    <span className={isBottleneck ? 'text-rose-300' : 'text-[var(--text-primary)]'}>
                       {c.department} {isBottleneck && '🔴 (PRIMARY BOTTLENECK)'}
                     </span>
                     <span className={`text-sm ${isBottleneck ? 'text-rose-400' : 'text-emerald-400'}`}>{c.ceiling}% Safe Cap</span>
                   </div>
-                  <div className="mt-2 w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                  <div className="mt-2 w-full bg-[var(--bg-secondary)] rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-full ${isBottleneck ? 'bg-rose-500' : 'bg-emerald-500'}`}
                       style={{ width: `${c.ceiling}%` }}
                     ></div>
                   </div>
-                  <div className="text-[11px] text-slate-400 mt-1">{c.limit_factor}</div>
+                  <div className="text-[11px] text-[var(--text-secondary)] mt-1">{c.limit_factor}</div>
                 </div>
               );
             })}
@@ -118,19 +118,19 @@ export function SafeEnvelope() {
         </div>
 
         {/* Capacity Unlock Actions */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-          <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Capacity Unlock Strategy</h2>
+        <div className="bg-[var(--bg-card)] border border-[var(--card-border)] rounded-[1rem] p-5 space-y-4">
+          <h2 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">Capacity Unlock Strategy</h2>
 
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-[var(--text-secondary)]">
             To bridge the <span className="text-rose-400 font-bold">{gap}% gap</span> without service failure, execute these targeted adjustments:
           </p>
 
           <div className="space-y-3">
             {unlock_actions?.map((act: any, i: number) => (
-              <div key={i} className="p-3 bg-slate-800/60 border border-slate-700 rounded-lg flex items-center justify-between">
+              <div key={i} className="p-3 bg-[var(--bg-secondary)]/60 border border-[var(--border-color)] rounded-lg flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-bold text-white">{act.action}</div>
-                  <div className="text-[10px] text-slate-400">Automated Twin Reallocation</div>
+                  <div className="text-xs font-bold text-[var(--text-primary)]">{act.action}</div>
+                  <div className="text-[10px] text-[var(--text-secondary)]">Automated Twin Reallocation</div>
                 </div>
                 <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/20">
                   {act.capacity_gain}
@@ -139,7 +139,7 @@ export function SafeEnvelope() {
             ))}
           </div>
 
-          <div className="p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-lg text-[11px] text-indigo-300">
+          <div className="p-3 bg-indigo-950/40 border border-[var(--accent)]/30 rounded-lg text-[11px] text-[var(--accent)]">
             👉 Head to the <span className="font-bold">AI Decision Council</span> to review specialist agent justifications and authorize state changes.
           </div>
         </div>
