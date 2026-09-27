@@ -23,6 +23,7 @@ export default function Navbar() {
       { name: 'Command Center', path: '/dashboard' },
       { name: 'Guest Requests', path: '/guest-requests' },
       { name: 'Time Machine', path: '/time-machine' },
+      { name: 'What-if Agent', path: '/what-if' },
       { name: 'Live Intel', path: '/world-intel' },
       { name: 'Weather Twin', path: '/weather-twin' },
       { name: 'Review & Kanban', path: '/reviews' },
