@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function IncidentsAndReallocation() {
   const [clusters, setClusters] = useState<any[]>([]);
@@ -11,6 +11,66 @@ export function IncidentsAndReallocation() {
   const [reallocation, setReallocation] = useState<any>(null);
   const [loadingReallocation, setLoadingReallocation] = useState(false);
   const [approved, setApproved] = useState(false);
+
+  // Critical / Emergency Incidents
+  const [incidentsList, setIncidentsList] = useState<any[]>([]);
+  const [emergencyType, setEmergencyType] = useState('Medical Emergency');
+  const [emergencyLocation, setEmergencyLocation] = useState('Main Swimming Pool');
+  const [emergencyDesc, setEmergencyDesc] = useState('Guest requires urgent on-site assistance.');
+  const [triggeringEmergency, setTriggeringEmergency] = useState(false);
+
+  const fetchIncidents = async () => {
+    try {
+      const res = await fetch('/api/v1/incidents', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const json = await res.json();
+      if (json.success) setIncidentsList(json.data);
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    fetchIncidents();
+    const timer = setInterval(fetchIncidents, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const triggerEmergency = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTriggeringEmergency(true);
+    try {
+      await fetch('/api/v1/incidents', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          incident_type: emergencyType,
+          location: emergencyLocation,
+          description: emergencyDesc,
+          severity: 'CRITICAL'
+        })
+      });
+      fetchIncidents();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setTriggeringEmergency(false);
+    }
+  };
+
+  const updateIncidentStatus = async (id: string, status: string, note?: string) => {
+    try {
+      await fetch(`/api/v1/incidents/${id}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, note })
+      });
+      fetchIncidents();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const runClusterAnalysis = async () => {
     setLoadingClusters(true);
@@ -52,16 +112,169 @@ export function IncidentsAndReallocation() {
     }
   };
 
-  const handleApprove = () => {
-    // Usually this would call another endpoint to confirm the move
-    setApproved(true);
+  const handleApprove = async () => {
+    if (!reallocation?.action_card?.action_id) {
+      setApproved(true);
+      return;
+    }
+    try {
+      await fetch('/api/v1/approve-plan', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          actionCardId: reallocation.action_card.action_id,
+          decision: 'APPROVE',
+          modifications: { relocation: 'Yes' }
+        })
+      });
+      setApproved(true);
+    } catch (err) {
+      console.error(err);
+      setApproved(true);
+    }
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="mb-10">
-        <h1 className="text-3xl font-bold text-white mb-2">Systemic Incidents & Reallocation</h1>
-        <p className="text-slate-400">Automated pattern detection and constraints-based resolution engine.</p>
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-white mb-2">Systemic Incidents &amp; Reallocation</h1>
+        <p className="text-slate-400">Automated pattern detection, critical incident escalation, and constraints-based resolution engine.</p>
+      </div>
+
+      {/* EMERGENCY INCIDENT ESCALATION SECTION */}
+      <div className="bg-slate-900 border border-rose-500/30 rounded-2xl p-6 shadow-xl space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+              <h2 className="text-lg font-bold text-white uppercase tracking-wide">Emergency &amp; Critical Incident Command</h2>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Escalates immediately to On-Duty Manager and Security. Follow configured on-site resort protocols.
+            </p>
+          </div>
+          <span className="px-3 py-1 bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-bold rounded-lg uppercase">
+            Least-Privilege Escalation
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <form onSubmit={triggerEmergency} className="lg:col-span-5 space-y-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Log Emergency Incident</h3>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">Incident Type</label>
+              <select 
+                value={emergencyType} 
+                onChange={e => setEmergencyType(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"
+              >
+                <option value="Medical Emergency">Medical Emergency</option>
+                <option value="Pool Safety Incident">Pool Safety Incident</option>
+                <option value="Fire / Smoke Hazard">Fire / Smoke Hazard</option>
+                <option value="Structural / Flood Breach">Structural / Flood Breach</option>
+                <option value="Security Lockdown">Security Lockdown</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">Exact Location</label>
+              <input 
+                type="text" 
+                value={emergencyLocation}
+                onChange={e => setEmergencyLocation(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-1">Operational Description</label>
+              <textarea 
+                value={emergencyDesc}
+                onChange={e => setEmergencyDesc(e.target.value)}
+                rows={2}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white"
+                required
+              />
+            </div>
+            <button 
+              type="submit"
+              disabled={triggeringEmergency}
+              className="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-lg shadow-lg shadow-rose-600/30 transition uppercase tracking-wider disabled:opacity-50"
+            >
+              {triggeringEmergency ? 'Broadcasting...' : '🚨 Trigger Critical Emergency Alert'}
+            </button>
+          </form>
+
+          <div className="lg:col-span-7 space-y-3">
+            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Active Incident Board</h3>
+            {incidentsList.length === 0 ? (
+              <div className="p-8 bg-slate-950/40 rounded-xl border border-slate-800 text-center text-slate-500 text-xs">
+                No active critical incidents recorded.
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                {incidentsList.map((inc: any) => (
+                  <div key={inc.incident_id} className="p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-rose-400">{inc.incident_id}</span>
+                        <span className="text-xs font-black text-white">{inc.incident_type}</span>
+                      </div>
+                      <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                        inc.status === 'DETECTED' ? 'bg-rose-500/30 text-rose-300 animate-pulse' :
+                        inc.status === 'ACKNOWLEDGED' ? 'bg-amber-500/30 text-amber-300' :
+                        inc.status === 'RESPONDING' ? 'bg-indigo-500/30 text-indigo-300' :
+                        inc.status === 'RESOLVED' ? 'bg-emerald-500/30 text-emerald-300' :
+                        'bg-slate-700 text-slate-400'
+                      }`}>
+                        {inc.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-slate-300 font-medium">📍 {inc.location} — {inc.description}</div>
+                    <div className="text-[10px] text-slate-500 flex items-center justify-between">
+                      <span>Reported by: {inc.detected_by}</span>
+                      <span>{new Date(inc.createdAt).toLocaleTimeString()}</span>
+                    </div>
+
+                    <div className="flex gap-2 pt-2 border-t border-slate-800/80">
+                      {inc.status === 'DETECTED' && (
+                        <button 
+                          onClick={() => updateIncidentStatus(inc.incident_id, 'ACKNOWLEDGED', 'Manager acknowledged')}
+                          className="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white font-bold text-[11px] rounded"
+                        >
+                          Acknowledge
+                        </button>
+                      )}
+                      {inc.status === 'ACKNOWLEDGED' && (
+                        <button 
+                          onClick={() => updateIncidentStatus(inc.incident_id, 'RESPONDING', 'First responders on site')}
+                          className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] rounded"
+                        >
+                          Mark Responding
+                        </button>
+                      )}
+                      {(inc.status === 'ACKNOWLEDGED' || inc.status === 'RESPONDING') && (
+                        <button 
+                          onClick={() => updateIncidentStatus(inc.incident_id, 'RESOLVED', 'Situation contained & stabilized')}
+                          className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded"
+                        >
+                          Resolve
+                        </button>
+                      )}
+                      {inc.status === 'RESOLVED' && (
+                        <button 
+                          onClick={() => updateIncidentStatus(inc.incident_id, 'CLOSED', 'Incident closed and audited')}
+                          className="px-3 py-1 bg-slate-700 hover:bg-slate-600 text-white font-bold text-[11px] rounded"
+                        >
+                          Close Incident
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -204,7 +417,7 @@ export function IncidentsAndReallocation() {
                   </button>
                 ) : (
                   <div className="w-full py-3 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-center rounded-lg text-sm font-bold">
-                    ✓ Move Approved & Keys Updated
+                    ✓ Move Approved &amp; Keys Updated
                   </div>
                 )}
               </div>
@@ -215,3 +428,4 @@ export function IncidentsAndReallocation() {
     </div>
   );
 }
+

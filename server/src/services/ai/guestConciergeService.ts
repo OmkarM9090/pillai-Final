@@ -3,7 +3,7 @@ import { GuestConversation } from '../../models/GuestConversation';
 
 export async function processConciergeMessage(guestId: string, roomNumber: string, message: string) {
   // 1. Send the message through the existing orchestration and NLP pipeline
-  const guestReq = await processGuestRequest(guestId, roomNumber, message);
+  const guestReq = await processGuestRequest(guestId, roomNumber, message, guestId);
 
   // 2. Determine an estimated time of arrival based on autonomy and department
   let estimatedMinutes = 15;

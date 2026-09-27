@@ -6,7 +6,7 @@ import { AuditLog } from '../../models/AuditLog';
 import { classifyGuestRequest } from './nlpEngine';
 import { selectBestWorker } from './workerEngine';
 
-export async function processGuestRequest(guest_name: string, room_number: string, request_text: string) {
+export async function processGuestRequest(guest_name: string, room_number: string, request_text: string, guest_user_id?: string) {
   // 0. Normalise the display name — callers sometimes pass the authenticated
   //    guest's ObjectId (24-char hex). Staff should never see a raw id.
   if (!guest_name || /^[a-f0-9]{24}$/i.test(guest_name)) {
@@ -30,7 +30,8 @@ export async function processGuestRequest(guest_name: string, room_number: strin
     sla_target_resolution_mins: nlp.sla_target_resolution_mins,
     priority_reason: nlp.priority_reason,
     equipment_needed: nlp.equipment_needed,
-    is_emergency: nlp.is_emergency
+    is_emergency: nlp.is_emergency,
+    guest_user_id
   });
 
   await guestReq.save();

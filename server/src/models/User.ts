@@ -13,6 +13,8 @@ export interface IUser {
   department?: string;
   staffId?: mongoose.Types.ObjectId;
   guestId?: mongoose.Types.ObjectId;
+  guestRoomNumber?: string;
+  bookingReference?: string;
   vendorId?: mongoose.Types.ObjectId;
   phone?: string;
   isActive: boolean;
@@ -75,6 +77,18 @@ const userSchema = new Schema<IUserDocument>(
     guestId: {
       type: Schema.Types.ObjectId,
       ref: 'Guest',
+    },
+    // Guest portal identity is tied to the authenticated account and an active
+    // booking reference; room number is never used as the only credential.
+    guestRoomNumber: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+    },
+    bookingReference: {
+      type: String,
+      trim: true,
+      maxlength: 40,
     },
     vendorId: {
       type: Schema.Types.ObjectId,

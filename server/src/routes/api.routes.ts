@@ -38,6 +38,8 @@ import {
 import { authenticate, authorize } from '../middleware/auth.middleware';
 import { ROLES } from '../config/constants';
 import { getWorldIntel, askGemini } from '../services/worldIntelService';
+import { listNotifications, markNotificationsRead } from '../controllers/notification.controller';
+import { createIncident, listIncidents, updateIncident } from '../controllers/incident.controller';
 
 const router = Router();
 
@@ -50,6 +52,15 @@ router.post('/world-intel/ask', authenticate, authorize(ROLES.MANAGER, ROLES.SUP
   try { const context = await getWorldIntel(); res.json({ success: true, data: await askGemini(req.body.prompt || 'Assess operational risk and recommend safe actions.', context) }); }
   catch (error: any) { res.status(502).json({ success: false, error: error.message }); }
 });
+
+// ==========================================
+// AUTHENTICATED CROSS-ROLE OPERATIONS
+// ==========================================
+router.get('/notifications', authenticate, listNotifications);
+router.post('/notifications/read', authenticate, markNotificationsRead);
+router.get('/incidents', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN, ROLES.SECURITY), listIncidents);
+router.post('/incidents', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN, ROLES.SECURITY, ROLES.STAFF, ROLES.WORKER), createIncident);
+router.patch('/incidents/:id', authenticate, authorize(ROLES.MANAGER, ROLES.SUPERVISOR, ROLES.GENERAL_MANAGER, ROLES.SUPER_ADMIN, ROLES.SECURITY), updateIncident);
 
 // ==========================================
 // MANAGER / SUPERVISOR / ADMIN ROUTES

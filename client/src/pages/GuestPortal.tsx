@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 export function GuestPortal() {
   const { currentUser } = useAuth();
-  const roomNumber = '105'; // Simulated room for the guest persona
+  const roomNumber = (currentUser as any)?.guestRoomNumber || '105';
   const guestId = currentUser?._id || 'GUEST_123';
   const guestName = currentUser?.name || 'Guest';
   

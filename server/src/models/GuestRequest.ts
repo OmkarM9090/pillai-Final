@@ -24,6 +24,7 @@ export interface IGuestRequest extends Document {
   is_emergency?: boolean;
   resolution_notes?: string;
   compensation_offered?: string;
+  guest_user_id?: mongoose.Types.ObjectId;
 }
 
 const GuestRequestSchema = new Schema<IGuestRequest>({
@@ -49,10 +50,11 @@ const GuestRequestSchema = new Schema<IGuestRequest>({
   equipment_needed: [{ type: String }],
   is_emergency: { type: Boolean, default: false },
   resolution_notes: { type: String },
-  compensation_offered: { type: String }
+  compensation_offered: { type: String },
+  guest_user_id: { type: Schema.Types.ObjectId, ref: 'User', index: true }
 }, { timestamps: true });
 
-GuestRequestSchema.pre('save', async function() {
+GuestRequestSchema.pre('save', async function(this: any) {
   if (!this.request_id) {
     const count = await mongoose.model('GuestRequest').countDocuments();
     this.request_id = `GR-${String(count + 1).padStart(4, '0')}`;

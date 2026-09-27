@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { ROLES } from './config/constants';
+import { ROLES, BCRYPT_SALT_ROUNDS } from './config/constants';
 import { connectDatabase, disconnectDatabase } from './config/database';
 import { User } from './models/User';
 
@@ -49,39 +49,48 @@ async function seed() {
     }
 
     // Create Demo Users
+    const defaultPassword = await (await import('bcryptjs')).default.hash('demo123', BCRYPT_SALT_ROUNDS);
     const demoUsers = [
       {
         name: 'Demo Manager',
         email: 'manager@smartresort.demo',
-        passwordHash: 'demo123',
+        passwordHash: defaultPassword,
         role: ROLES.MANAGER || 'MANAGER',
         department: 'Management',
         isActive: true,
       },
       {
-        name: 'Demo Housekeeper',
+        name: 'Staff H1',
         email: 'housekeeper@smartresort.demo',
-        passwordHash: 'demo123',
+        passwordHash: defaultPassword,
         role: ROLES.WORKER || 'WORKER',
         department: 'Housekeeping',
         isActive: true,
       },
       {
-        name: 'Demo Guest',
+        name: 'Staff M1',
+        email: 'technician@smartresort.demo',
+        passwordHash: defaultPassword,
+        role: ROLES.WORKER || 'WORKER',
+        department: 'Maintenance',
+        isActive: true,
+      },
+      {
+        name: 'Guest 105',
         email: 'guest@smartresort.demo',
-        passwordHash: 'demo123',
+        passwordHash: defaultPassword,
         role: ROLES.GUEST || 'GUEST',
+        guestRoomNumber: '105',
+        bookingReference: 'BK-RESORT-105',
         department: 'Guest Relations',
         isActive: true,
       }
     ];
 
     for (const u of demoUsers) {
-      if (!(await User.findOne({ email: u.email }))) {
-        await User.create(u);
-      }
+      await User.findOneAndUpdate({ email: u.email }, { $set: u }, { upsert: true });
     }
-    console.log('👤 Demo accounts created for: manager, housekeeper, guest.');
+    console.log('👤 Demo accounts created for: manager, housekeeper, technician, guest.');
 
     await disconnectDatabase();
     process.exit(0);
