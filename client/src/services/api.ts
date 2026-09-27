@@ -1,6 +1,11 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+// Ensure the base URL ends with /api/v1
+let baseUrl = import.meta.env.VITE_API_URL || '';
+if (baseUrl && !baseUrl.endsWith('/api/v1')) {
+  baseUrl = baseUrl.replace(/\/$/, '') + '/api/v1';
+}
+const BASE_URL = baseUrl || '/api/v1';
 
 // ============================================================
 // Axios instance
