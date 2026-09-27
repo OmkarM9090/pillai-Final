@@ -140,8 +140,8 @@ async function seed() {
       spaStaff[1].cross_trained.push('front_desk');
     }
 
-    // Set 2 sick
-    staffMembers[0].is_available = false;
+    // Set 2 sick/off-duty
+    staffMembers[4].is_available = false;
     staffMembers[10].is_available = false;
 
     // We will save staffMembers later after creating GuestRequests
@@ -188,7 +188,7 @@ async function seed() {
     const req1 = await GuestRequest.create({
       guest_name: 'Guest 105', room_number: '105', request_text: 'I need an extra towel please',
       intent: 'TOWEL', priority: 'LOW', autonomy_level: 'AUTO', department: 'housekeeping',
-      status: 'ASSIGNED', assigned_staff: staffMembers[1].name
+      status: 'ASSIGNED', assigned_staff: staffMembers[0].name
     });
     const req2 = await GuestRequest.create({
       guest_name: 'Guest 204', room_number: '204', request_text: 'The AC in my room is making a terrible noise',
@@ -198,13 +198,13 @@ async function seed() {
     const req3 = await GuestRequest.create({
       guest_name: 'Guest 112', room_number: '112', request_text: 'Can I get two more pillows?',
       intent: 'PILLOW', priority: 'LOW', autonomy_level: 'AUTO', department: 'housekeeping',
-      status: 'ASSIGNED', assigned_staff: staffMembers[2].name
+      status: 'ASSIGNED', assigned_staff: staffMembers[1].name
     });
 
+    staffMembers[0].task_status = 'assigned';
+    staffMembers[0].current_task_id = req1.request_id;
     staffMembers[1].task_status = 'assigned';
-    staffMembers[1].current_task_id = req1.request_id;
-    staffMembers[2].task_status = 'assigned';
-    staffMembers[2].current_task_id = req3.request_id;
+    staffMembers[1].current_task_id = req3.request_id;
     
     const savedStaffRoster = await StaffRoster.insertMany(staffMembers);
     console.log(`✅ Seeded 30 Staff with updated task statuses`);
@@ -238,28 +238,30 @@ async function seed() {
         isActive: true,
       },
       {
-        name: 'Housekeeper Worker',
+        name: 'Staff H1',
         email: 'housekeeper@smartresort.demo',
         passwordHash: defaultPassword,
         role: ROLES.WORKER,
         department: 'Housekeeping',
-        staffId: savedStaffRoster.find(s => s.department === 'housekeeping')?._id,
+        staffId: savedStaffRoster.find(s => s.name === 'Staff H1')?._id,
         isActive: true,
       },
       {
-        name: 'Maintenance Tech',
+        name: 'Staff M1',
         email: 'technician@smartresort.demo',
         passwordHash: defaultPassword,
         role: ROLES.WORKER,
         department: 'Maintenance',
-        staffId: savedStaffRoster.find(s => s.department === 'maintenance')?._id,
+        staffId: savedStaffRoster.find(s => s.name === 'Staff M1')?._id,
         isActive: true,
       },
       {
-        name: 'Guest User',
+        name: 'Guest 105',
         email: 'guest@smartresort.demo',
         passwordHash: defaultPassword,
         role: ROLES.GUEST,
+        guestRoomNumber: '105',
+        bookingReference: 'BK-RESORT-105',
         isActive: true,
       },
       {

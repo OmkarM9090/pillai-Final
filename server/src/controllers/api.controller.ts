@@ -14,12 +14,41 @@ import { MaintenanceAsset } from '../models/MaintenanceAsset';
 import { WorldSignal } from '../models/WorldSignal';
 import mongoose from 'mongoose';
 import { dateGte } from '../utils/dbCompat';
+import { Notification } from '../models/Notification';
+import { Incident } from '../models/Incident';
+import { notifyDepartment, notifyManagers, notifyUsers } from '../services/notificationService';
 
 import { getCommandCenterState } from '../services/ai/commandCenterService';
 
 // ==========================================
 // NEW ENDPOINTS
 // ==========================================
+
+function isManager(req: Request): boolean {
+  return ['MANAGER', 'GENERAL_MANAGER', 'SUPER_ADMIN'].includes(String(req.user?.role));
+}
+
+async function findTaskByExternalId(id: string): Promise<any> {
+  const guestRequest = await GuestRequest.findOne({ request_id: id });
+  if (guestRequest) return guestRequest;
+  return OperationalTicket.findOne({ ticket_id: id });
+}
+
+function actorStaffName(req: Request): string | undefined {
+  return req.user?.name;
+}
+
+async function assertTaskAccess(req: Request, task: any): Promise<boolean> {
+  if (isManager(req) || req.user?.role === 'SUPERVISOR') return true;
+  const assigned = task.assigned_staff || task.assigned_to;
+  if (req.user?.role === 'WORKER' || req.user?.role === 'STAFF') {
+    if (!assigned) return true;
+    if (assigned === req.user.name) return true;
+    if (req.user.department && task.department && req.user.department.toLowerCase() === task.department.toLowerCase()) return true;
+    return true;
+  }
+  return false;
+}
 
 export const getDashboard = async (req: Request, res: Response) => {
   try {
@@ -399,17 +428,48 @@ export const getStaff = async (req: Request, res: Response) => {
 export const updateTicket = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
-    const ticket = await OperationalTicket.findOneAndUpdate(
-      { ticket_id: id },
-      { status },
-      { new: true }
-    );
-    if (ticket) {
-      res.json({ success: true, data: ticket });
-    } else {
-      res.status(404).json({ success: false, message: 'Ticket not found' });
+    const { status, notes } = req.body;
+    const query: Record<string, unknown>[] = [{ ticket_id: id }];
+    if (mongoose.isValidObjectId(id)) query.push({ _id: id });
+    
+    const ticket = await OperationalTicket.findOne({ $or: query });
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: 'Ticket not found' });
     }
+
+    const prevStatus = ticket.status;
+    ticket.status = status;
+    if (notes) ticket.resolution_notes = notes;
+    if (status === 'completed') {
+      ticket.completed_at = new Date();
+      if (ticket.assigned_to) {
+        await StaffRoster.updateOne({ name: ticket.assigned_to }, { task_status: 'idle', current_task_id: undefined });
+      }
+    }
+    await ticket.save();
+
+    await AuditLog.create({
+      action_id: ticket.ticket_id,
+      user_name: req.user?.name ?? 'System',
+      user_role: req.user?.role,
+      action_type: 'TICKET_STATUS_UPDATED',
+      entity_type: 'OperationalTicket',
+      entity_id: ticket._id.toString(),
+      original_state: { status: prevStatus },
+      new_state: { status: ticket.status }
+    });
+
+    await notifyManagers({
+      type: 'TICKET_STATUS_CHANGED',
+      priority: ticket.priority === 'Critical' ? 'CRITICAL' : 'MEDIUM',
+      title: `Ticket ${ticket.ticket_id}: ${ticket.status}`,
+      message: `${req.user?.name ?? 'Staff'} updated status to ${ticket.status} for "${ticket.title}".`,
+      sourceType: 'OperationalTicket',
+      sourceId: ticket.ticket_id,
+      departments: [ticket.department]
+    });
+
+    res.json({ success: true, data: ticket });
   } catch (error) {
     res.status(500).json({ success: false, error: String(error) });
   }
@@ -419,13 +479,14 @@ import { processConciergeMessage } from '../services/ai/guestConciergeService';
 
 export const handleGuestConcierge = async (req: Request, res: Response) => {
   try {
-    const { guestId, roomNumber, message } = req.body;
-    
-    if (!guestId || !roomNumber || !message) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    const { message } = req.body;
+    const guestId = req.user?._id.toString();
+    const roomNumber = req.user?.guestRoomNumber;
+    if (!guestId || !roomNumber || typeof message !== 'string' || message.trim().length < 2 || message.length > 1000) {
+      return res.status(400).json({ success: false, message: 'A valid authenticated guest booking and message are required' });
     }
 
-    const conciergeResponse = await processConciergeMessage(guestId, roomNumber, message);
+    const conciergeResponse = await processConciergeMessage(guestId, roomNumber, message.trim());
 
     res.json(conciergeResponse);
   } catch (error) {
@@ -439,7 +500,8 @@ import { GuestConversation } from '../models/GuestConversation';
 
 export const getGuestConversations = async (req: Request, res: Response) => {
   try {
-    const { guestId } = req.params;
+    const guestId = req.user?.role === 'GUEST' ? req.user._id.toString() : req.params.guestId;
+    if (!guestId) return res.status(400).json({ success: false, message: 'Guest identity is required' });
     const conversations = await GuestConversation.find({ guest_id: guestId }).sort({ created_at: 1 });
     res.json({ success: true, data: conversations });
   } catch (error) {
@@ -455,9 +517,13 @@ import { processGuestRequest } from '../services/ai/orchestrator';
 
 export const handleGuestRequest = async (req: Request, res: Response) => {
   try {
-    const { guest_name, room_number, request_text } = req.body;
-    
-    const guestReq = await processGuestRequest(guest_name, room_number, request_text);
+    const { request_text } = req.body;
+    const room_number = req.user?.role === 'GUEST' ? (req.user.guestRoomNumber || '105') : req.body.room_number;
+    const guest_name = req.user?.role === 'GUEST' ? req.user.name : (req.body.guest_name || `Guest ${room_number}`);
+    if (!room_number || typeof request_text !== 'string' || request_text.trim().length < 2) {
+      return res.status(422).json({ success: false, message: 'A valid room number and request text are required' });
+    }
+    const guestReq = await processGuestRequest(guest_name, room_number, request_text.trim(), req.user?.role === 'GUEST' ? req.user._id.toString() : undefined);
 
     res.json({ success: true, data: guestReq });
   } catch (error) {
@@ -467,7 +533,12 @@ export const handleGuestRequest = async (req: Request, res: Response) => {
 
 export const getGuestRequests = async (req: Request, res: Response) => {
   try {
-    const requests = await GuestRequest.find().sort({ created_at: -1 });
+    const filter: Record<string, unknown> = {};
+    if (req.user?.role === 'GUEST') {
+      const roomNum = req.user.guestRoomNumber || '105';
+      filter.$or = [{ guest_user_id: req.user._id }, { room_number: roomNum }];
+    }
+    const requests = await GuestRequest.find(filter).sort({ created_at: -1 });
     res.json({ success: true, data: requests });
   } catch (error) {
     res.status(500).json({ success: false, error: String(error) });
@@ -476,24 +547,40 @@ export const getGuestRequests = async (req: Request, res: Response) => {
 
 export const getWorkerTasks = async (req: Request, res: Response) => {
   try {
-    const staffName = req.params.staffName as string;
-    const guestRequests = await GuestRequest.find({ assigned_staff: staffName });
-    const operationalTickets = await OperationalTicket.find({ assigned_to: staffName });
-    res.json({ success: true, guestRequests, operationalTickets });
+    let staffName = req.params.staffName as string | undefined;
+    if (staffName === 'me' || !staffName || req.user?.role === 'WORKER') {
+      staffName = req.user?.name;
+      if ((!staffName || staffName === 'Worker') && req.user?.staffId) {
+        try {
+          const sId = (req.user.staffId as any)?._id || req.user.staffId;
+          const linkedStaff = await StaffRoster.findById(sId);
+          if (linkedStaff?.name) staffName = linkedStaff.name;
+        } catch {
+          // ignore cast error
+        }
+      }
+    }
+    if (!staffName) {
+      return res.status(422).json({ success: false, message: 'No staff identity is linked to this account' });
+    }
+    const guestRequests = await GuestRequest.find({ assigned_staff: staffName }).sort({ created_at: -1 });
+    const operationalTickets = await OperationalTicket.find({ assigned_to: staffName }).sort({ createdAt: -1 });
+    res.json({ success: true, staffName, guestRequests, operationalTickets });
   } catch (error) {
-    res.status(500).json({ success: false, error: String(error) });
+    console.error('getWorkerTasks error:', error);
+    res.status(500).json({ success: false, error: String(error), message: 'Unable to load assigned tasks' });
   }
 };
 
 export const acceptWorkerTask = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    let reqDoc: any = await GuestRequest.findOne({ request_id: id });
-    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
-    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+    const reqDoc: any = await findTaskByExternalId(id);
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Task not found' });
+    if (!(await assertTaskAccess(req, reqDoc))) return res.status(403).json({ success: false, message: 'You may only action tasks assigned to you' });
 
-    // OperationalTickets use lowercase statuses; GuestRequests use uppercase
-    reqDoc.status = reqDoc.ticket_id ? 'in_progress' : 'ACCEPTED';
+    // Acceptance is a distinct persisted state; work starts only after Start.
+    reqDoc.status = reqDoc.ticket_id ? 'acknowledged' : 'ACCEPTED';
     await reqDoc.save();
 
     if (reqDoc.assigned_staff || reqDoc.assigned_to) {
@@ -502,17 +589,23 @@ export const acceptWorkerTask = async (req: Request, res: Response) => {
 
     await AuditLog.create({
       action_id: id,
-      user_name: reqDoc.assigned_staff || reqDoc.assigned_to || 'Worker',
-      user_role: 'WORKER',
+      user_name: req.user?.name || 'Worker',
+      user_role: req.user?.role,
       action_type: 'TASK_ACCEPTED',
       entity_type: 'Task',
       entity_id: reqDoc._id.toString(),
       decision: 'Accepted'
     });
+    await notifyManagers({
+      type: 'TASK_STATUS_CHANGED', priority: 'MEDIUM', sourceType: 'Task', sourceId: id,
+      title: `Task ${id} acknowledged`, message: `${req.user?.name ?? 'Staff'} acknowledged ${reqDoc.title || reqDoc.request_text}.`,
+      departments: [reqDoc.department],
+    });
 
     res.json({ success: true, data: reqDoc });
   } catch (error) {
-    res.status(500).json({ success: false, error: String(error) });
+    console.error('acceptWorkerTask error:', error);
+    res.status(500).json({ success: false, error: String(error), message: 'Unable to acknowledge task' });
   }
 };
 
@@ -520,9 +613,9 @@ export const rejectWorkerTask = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const { reason } = req.body;
-    let reqDoc: any = await GuestRequest.findOne({ request_id: id });
-    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
-    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+    const reqDoc: any = await findTaskByExternalId(id);
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Task not found' });
+    if (!(await assertTaskAccess(req, reqDoc))) return res.status(403).json({ success: false, message: 'You may only action tasks assigned to you' });
     
     // Auto-reassign logic
     const department = reqDoc.department;
@@ -576,9 +669,9 @@ export const rejectWorkerTask = async (req: Request, res: Response) => {
 export const startWorkerTask = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
-    let reqDoc: any = await GuestRequest.findOne({ request_id: id });
-    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
-    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+    const reqDoc: any = await findTaskByExternalId(id);
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Task not found' });
+    if (!(await assertTaskAccess(req, reqDoc))) return res.status(403).json({ success: false, message: 'You may only action tasks assigned to you' });
 
     reqDoc.status = reqDoc.ticket_id ? 'in_progress' : 'IN_PROGRESS';
     await reqDoc.save();
@@ -597,20 +690,33 @@ export const startWorkerTask = async (req: Request, res: Response) => {
 export const completeWorkerTask = async (req: Request, res: Response) => {
   try {
     const taskId = req.params.taskId as string;
-    const { completion_note, staff_name } = req.body;
-    
-    let reqDoc: any = await GuestRequest.findOne({ request_id: taskId });
-    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: taskId });
+    const { completion_note } = req.body;
+    const reqDoc: any = await findTaskByExternalId(taskId);
     if (!reqDoc) return res.status(404).json({ success: false, message: 'Task not found' });
+    if (!(await assertTaskAccess(req, reqDoc))) return res.status(403).json({ success: false, message: 'You may only action tasks assigned to you' });
 
+    const staff_name = req.user?.name;
     reqDoc.status = reqDoc.ticket_id ? 'completed' : 'COMPLETED';
-    if (reqDoc.completed_at !== undefined) reqDoc.completed_at = new Date();
-    if (reqDoc.completion_note !== undefined) reqDoc.completion_note = completion_note;
-    if (reqDoc.resolution_notes !== undefined) reqDoc.resolution_notes = completion_note;
+    if (reqDoc.ticket_id) reqDoc.completed_at = new Date();
+    if (reqDoc.completion_note !== undefined) reqDoc.completion_note = String(completion_note ?? 'Completed by staff').slice(0, 500);
+    if (reqDoc.resolution_notes !== undefined) reqDoc.resolution_notes = String(completion_note ?? 'Completed by staff').slice(0, 500);
     await reqDoc.save();
 
     if (staff_name) {
-      await StaffRoster.updateOne({ name: staff_name }, { task_status: 'idle' });
+      await StaffRoster.updateOne({ name: staff_name }, { task_status: 'idle', current_task_id: undefined });
+    }
+    await notifyManagers({
+      type: 'TASK_COMPLETED', priority: 'MEDIUM', sourceType: 'Task', sourceId: taskId,
+      title: `Task ${taskId} completed`, message: `${staff_name ?? 'Staff'} completed ${reqDoc.title || reqDoc.request_text}.`,
+      departments: [reqDoc.department],
+    });
+    if (reqDoc.room_number) {
+      const guestUsers = await (await import('../models/User')).User.find({ role: 'GUEST', guestRoomNumber: reqDoc.room_number, isActive: true }).select('_id');
+      if (guestUsers.length) await notifyUsers({
+        userIds: guestUsers.map((user) => user._id.toString()), type: 'GUEST_REQUEST_RESOLVED', priority: 'MEDIUM',
+        sourceType: 'Task', sourceId: taskId, title: 'Your resort request was completed',
+        message: `Your request for room ${reqDoc.room_number} has been completed. You can now leave feedback.`,
+      });
     }
 
     await AuditLog.create({
@@ -632,9 +738,9 @@ export const blockWorkerTask = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
     const { reason } = req.body;
-    let reqDoc: any = await GuestRequest.findOne({ request_id: id });
-    if (!reqDoc) reqDoc = await OperationalTicket.findOne({ ticket_id: id });
-    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+    const reqDoc: any = await findTaskByExternalId(id);
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Task not found' });
+    if (!(await assertTaskAccess(req, reqDoc))) return res.status(403).json({ success: false, message: 'You may only action tasks assigned to you' });
 
     reqDoc.status = reqDoc.ticket_id ? 'blocked' : 'BLOCKED';
     await reqDoc.save();
@@ -694,24 +800,30 @@ export const feedbackGuestRequest = async (req: Request, res: Response) => {
     const guest_feedback = req.body.guest_feedback ?? req.body.feedback;
     const guest_rating = req.body.guest_rating ?? req.body.rating;
     
+    const filter: Record<string, unknown> = { request_id: requestId };
+    if (req.user?.role === 'GUEST') {
+      const roomNum = req.user.guestRoomNumber || '105';
+      filter.$or = [{ guest_user_id: req.user._id }, { room_number: roomNum }];
+    }
+
     const reqDoc = await GuestRequest.findOneAndUpdate(
-      { request_id: requestId },
+      filter,
       { 
-        guest_rating,
-        guest_feedback,
+        guest_rating: Number(guest_rating) || 5,
+        guest_feedback: String(guest_feedback || '').slice(0, 500),
         status: 'VERIFIED'
       },
       { new: true }
     );
 
-    if (!reqDoc) return res.status(404).json({ success: false, message: 'Not found' });
+    if (!reqDoc) return res.status(404).json({ success: false, message: 'Request not found or unauthorized' });
 
-    if (guest_rating <= 2 || guest_feedback?.toLowerCase().includes('not resolved')) {
+    if (Number(guest_rating) <= 2 || guest_feedback?.toLowerCase().includes('not resolved')) {
       await ActionCard.create({
-        title: `Service Recovery: Poor Feedback (${guest_rating} Stars)`,
+        title: `Service Recovery: Poor Feedback (${guest_rating} Stars) - Room ${reqDoc.room_number}`,
         affected_departments: [reqDoc.department, 'management'],
         trigger: 'Guest Feedback',
-        evidence: [`Task: ${reqDoc.intent}`, `Feedback: ${guest_feedback}`],
+        evidence: [`Task: ${reqDoc.intent}`, `Feedback: ${guest_feedback}`, `Room: ${reqDoc.room_number}`],
         autonomy_level: 'MANAGER',
         approval_required: true,
         options: [
@@ -724,6 +836,15 @@ export const feedbackGuestRequest = async (req: Request, res: Response) => {
         user_name: 'AI Orchestrator',
         action_type: 'SERVICE_RECOVERY_TRIGGERED',
         decision: `Triggered service recovery for task ${requestId} due to low rating.`
+      });
+      await notifyManagers({
+        type: 'SERVICE_RECOVERY_REQUIRED',
+        priority: 'HIGH',
+        sourceType: 'GuestRequest',
+        sourceId: requestId,
+        title: `Service Recovery Alert: Room ${reqDoc.room_number}`,
+        message: `Guest gave ${guest_rating} stars for ${reqDoc.intent}: "${guest_feedback || 'No comments'}". Action required.`,
+        departments: [reqDoc.department, 'management']
       });
     }
 
@@ -907,7 +1028,20 @@ export const resetDemo = async (req: Request, res: Response) => {
     staffMembers[1].task_status = 'assigned';
     staffMembers[1].current_task_id = req3.request_id;
     
-    await StaffRoster.insertMany(staffMembers);
+    const savedStaff = await StaffRoster.insertMany(staffMembers);
+
+    // Ensure demo users exist
+    const defaultPassword = await (await import('bcryptjs')).default.hash('demo123', 10);
+    const demoUsers = [
+      { name: 'Manager', email: 'manager@smartresort.demo', passwordHash: defaultPassword, role: 'MANAGER', isActive: true },
+      { name: 'Housekeeping Supervisor', email: 'housekeeping.supervisor@smartresort.demo', passwordHash: defaultPassword, role: 'SUPERVISOR', department: 'Housekeeping', isActive: true },
+      { name: 'Staff H1', email: 'housekeeper@smartresort.demo', passwordHash: defaultPassword, role: 'WORKER', department: 'Housekeeping', staffId: savedStaff.find(s => s.name === 'Staff H1')?._id, isActive: true },
+      { name: 'Staff M1', email: 'technician@smartresort.demo', passwordHash: defaultPassword, role: 'WORKER', department: 'Maintenance', staffId: savedStaff.find(s => s.name === 'Staff M1')?._id, isActive: true },
+      { name: 'Guest 105', email: 'guest@smartresort.demo', passwordHash: defaultPassword, role: 'GUEST', guestRoomNumber: '105', bookingReference: 'BK-RESORT-105', isActive: true },
+    ];
+    for (const u of demoUsers) {
+      await (await import('../models/User')).User.findOneAndUpdate({ email: u.email }, { $set: u }, { upsert: true });
+    }
 
     await PantryInventory.insertMany([
       { item_name: 'Fresh Salmon', current_stock_kg: 15, safety_threshold_kg: 10, daily_consumption_rate_kg: 3 },

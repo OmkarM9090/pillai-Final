@@ -19,6 +19,7 @@ export interface IOperationalTicket extends Document {
   guest_request_id?: string;
   compensation_offered?: string;
   relocation_offered?: string;
+  completed_at?: Date;
 }
 
 const OperationalTicketSchema = new Schema<IOperationalTicket>({
@@ -27,7 +28,7 @@ const OperationalTicketSchema = new Schema<IOperationalTicket>({
   description: { type: String },
   department: { type: String, required: true },
   priority: { type: String, enum: ['Critical', 'High', 'Medium', 'Low'], default: 'Medium' },
-  status: { type: String, enum: ['todo', 'in_progress', 'blocked', 'completed', 'ACKNOWLEDGED'], default: 'todo' },
+  status: { type: String, enum: ['created', 'todo', 'assigned', 'notified', 'acknowledged', 'in_progress', 'blocked', 'completed', 'verified', 'closed', 'rejected', 'escalated', 'ACKNOWLEDGED'], default: 'created' },
   source: { type: String, enum: ['review', 'maintenance', 'guest_request', 'system'], default: 'system' },
   room_number: { type: String },
   assigned_to: { type: String },

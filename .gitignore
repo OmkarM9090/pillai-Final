@@ -36,6 +36,7 @@ Thumbs.db
 
 # Python / ML server
 ml-server/venv/
+ml-server/.venv/
 ml-server/**/__pycache__/
 __pycache__/
 *.pyc
