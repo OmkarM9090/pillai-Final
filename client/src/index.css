@@ -233,3 +233,55 @@ body {
   background: rgba(220, 38, 38, 0.1);
   color: var(--color-resort-error);
 }
+
+/* ============================================================
+   Live Intelligence surfaces — map + panel polish
+   ============================================================ */
+.leaflet-container {
+  background: #0b1220 !important;
+  font-family: var(--font-sans);
+}
+.leaflet-container .leaflet-popup-content-wrapper,
+.leaflet-container .leaflet-popup-tip {
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+}
+.leaflet-container .leaflet-popup-content { margin: 10px 12px; }
+.leaflet-container a.leaflet-popup-close-button { color: #94a3b8; }
+.leaflet-tooltip {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  box-shadow: none;
+}
+.leaflet-tooltip::before { border-top-color: rgba(15, 23, 42, 0.95); }
+.leaflet-control-layers, .leaflet-bar a {
+  background: rgba(15, 23, 42, 0.92) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Thin scrollbars inside intelligence panels */
+.overflow-y-auto::-webkit-scrollbar { width: 6px; height: 6px; }
+.overflow-y-auto::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 999px; }
+.overflow-x-auto::-webkit-scrollbar { height: 6px; }
+.overflow-x-auto::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 999px; }
+
+input[type='range'] {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  appearance: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 999px;
+  background: #22d3ee;
+  border: 2px solid #0f172a;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.25);
+  cursor: pointer;
+}

@@ -7,6 +7,12 @@ import { classifyGuestRequest } from './nlpEngine';
 import { selectBestWorker } from './workerEngine';
 
 export async function processGuestRequest(guest_name: string, room_number: string, request_text: string) {
+  // 0. Normalise the display name — callers sometimes pass the authenticated
+  //    guest's ObjectId (24-char hex). Staff should never see a raw id.
+  if (!guest_name || /^[a-f0-9]{24}$/i.test(guest_name)) {
+    guest_name = room_number ? `Guest ${room_number}` : 'In-house guest';
+  }
+
   // 1. NLP Classification
   const nlp = classifyGuestRequest(request_text);
 
